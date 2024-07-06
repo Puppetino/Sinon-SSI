@@ -4,6 +4,9 @@ import requests
 from discord import Embed
 from discord.ext import tasks
 
+# Keep Alive Module
+from keep_alive import keep_alive
+
 # Get environment variables
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 CHANNEL_ID = int(os.getenv('CHANNEL_ID'))
@@ -48,5 +51,8 @@ async def check_streams():
         embed.add_field(name="Viewers", value=stream['viewer_count'])
         embed.set_thumbnail(url=stream['thumbnail_url'])
         await channel.send(embed=embed)
+
+# Keep the bot alive
+keep_alive()
 
 client.run(DISCORD_TOKEN)
