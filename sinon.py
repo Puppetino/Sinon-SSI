@@ -45,11 +45,12 @@ async def check_streams():
             title=stream['title'],
             url=f"https://www.twitch.tv/{stream['user_name']}",
             description=f"{stream['user_name']} is live streaming {CATEGORY_NAME}",
-            color=discord.Color.purple()
+            color=discord.Color(0x9900ff)
         )
         embed.set_author(name=stream['user_name'], url=f"https://www.twitch.tv/{stream['user_name']}")
         embed.add_field(name="Viewers", value=stream['viewer_count'])
         embed.set_thumbnail(url=stream['thumbnail_url'])
+        embed.set_footer(text="Sinon - Made by Puppetino")
         await channel.send(embed=embed)
 
 # Keep the bot alive
