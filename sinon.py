@@ -2,7 +2,7 @@ import os
 import discord
 import requests
 from discord import Embed
-from discord.ext import tasks  # Import the tasks module
+from discord.ext import tasks
 
 # Get environment variables
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
