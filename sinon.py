@@ -2,8 +2,8 @@ import os
 import json
 import discord
 import requests
-from discord import app_commands, Intents, SelectMenu, SelectOption, ComponentType, Embed, Integration
-from discord.ext import tasks, commands
+from discord import app_commands, Intents
+from discord.ext import tasks
 
 # Get environment variables
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
@@ -21,7 +21,6 @@ settings_file = "settings.json"
 settings = {}
 reported_streams = {}
 
-
 # Load settings from file
 def load_settings():
     global settings
@@ -34,23 +33,35 @@ def load_settings():
     else:
         settings = {}
 
-
 # Save settings to file
 def save_settings():
     with open(settings_file, "w") as f:
         json.dump(settings, f)
-
 
 @client.event
 async def on_ready():
     await tree.sync()
     print(f'Logged in as {client.user}')
     load_settings()
+    await delete_all_messages()
     for guild_id, guild_settings in settings.items():
-        if guild_settings.get("channel_id") and guild_settings.get(
-                "category_name") and not check_streams.is_running():
+        if guild_settings.get("channel_id") and guild_settings.get("category_name") and not check_streams.is_running():
             check_streams.start()
 
+# Delete all messages in the report channel for all guilds
+async def delete_all_messages():
+    for guild_id, guild_settings in settings.items():
+        channel_id = guild_settings.get('channel_id')
+        if channel_id:
+            channel = client.get_channel(channel_id)
+            if channel:
+                try:
+                    await channel.purge()
+                    reported_streams[guild_id] = {}
+                except discord.Forbidden:
+                    print(f"Missing permissions to purge messages in channel: {channel.name}")
+                except discord.HTTPException as e:
+                    print(f"Failed to purge messages in channel: {channel.name} - {e}")
 
 # Helper functions
 async def get_twitch_streams(category_name):
@@ -69,7 +80,6 @@ async def get_twitch_streams(category_name):
     except Exception as e:
         print(f"Error fetching streams: {e}")
         return {'data': []}
-
 
 async def get_user_info(user_id):
     try:
@@ -94,25 +104,24 @@ async def get_user_info(user_id):
         print(f"Error fetching user info: {e}")
         return {}
 
-
 @tree.command(name="set_report_channel", description="Set the channel for stream updates")
-async def set_report_channel(interaction: discord.Interaction,
-                             channel: discord.TextChannel):
+async def set_report_channel(interaction: discord.Interaction, channel: discord.TextChannel):
     guild_id = str(interaction.guild_id)
     if guild_id not in settings:
         settings[guild_id] = {}
     settings[guild_id]['channel_id'] = channel.id
     save_settings()
-    await interaction.response.send_message(embed=discord.Embed(
+    embed = discord.Embed(
         title="Stream updates will be posted in",
-        description=channel.mention
-    ))
+        description=channel.mention,
+        color=discord.Color(0x9900ff)
+    )
+    embed.set_footer(text="Sinon - Made by Puppetino")
+    await interaction.response.send_message(embed=embed)
     if settings[guild_id].get('category_name'):
         await check_streams_once(guild_id)
-    if settings[guild_id].get(
-            'category_name') and not check_streams.is_running():
+    if settings[guild_id].get('category_name') and not check_streams.is_running():
         check_streams.start()
-
 
 @tree.command(name="set_twitch_category", description="Set the Twitch category to monitor")
 async def set_twitch_category(interaction: discord.Interaction, category: str):
@@ -121,15 +130,17 @@ async def set_twitch_category(interaction: discord.Interaction, category: str):
         settings[guild_id] = {}
     settings[guild_id]['category_name'] = category
     save_settings()
-    await interaction.response.send_message(embed=discord.Embed(
+    embed = discord.Embed(
         title="Twitch category set to",
-        description=category
-    ))
+        description=category,
+        color=discord.Color(0x9900ff)
+    )
+    embed.set_footer(text="Sinon - Made by Puppetino")
+    await interaction.response.send_message(embed=embed)
     if settings[guild_id].get('channel_id'):
         await check_streams_once(guild_id)
     if settings[guild_id].get('channel_id') and not check_streams.is_running():
         check_streams.start()
-
 
 @tree.command(name="setup", description="Guide through setting up the bot")
 async def setup_command(interaction: discord.Interaction):
@@ -139,27 +150,44 @@ async def setup_command(interaction: discord.Interaction):
                     "To set the Twitch category to monitor, use the `/set_twitch_category` command.",
         color=discord.Color(0x9900ff)
     )
+    setup_text.set_footer(text="Sinon - Made by Puppetino")
     await interaction.response.send_message(embed=setup_text)
-
 
 @tree.command(name="help", description="List all commands")
 async def help_command(interaction: discord.Interaction):
     help_text = discord.Embed(
         title="Available Commands",
-        description="/set_report_channel - Set the channel for stream updates\n"
-                    "/set_twitch_category - Set the Twitch category to monitor\n"
-                    "/setup - Guide through setting up the bot\n"
-                    "/help - List all commands",
+        description="",
         color=discord.Color(0x9900ff)
     )
+    help_text.add_field(
+        name="List of available commands:",
+        value="`/set_report_channel` - Set the channel for stream updates\n"
+              "`/set_twitch_category` - Set the Twitch category to monitor\n"
+              "`/setup` - Guide through setting up the bot\n"
+              "`/help` - List all commands\n"
+              "`/about` - Information about the bot\n"
+              "`/delete_all_messages` - Delete all messages in the report channel",
+        inline=False)
+    help_text.set_footer(text="Sinon - Made by Puppetino")
     await interaction.response.send_message(embed=help_text)
+
+@tree.command(name="about", description="About the bot")
+async def about_command(interaction: discord.Interaction):
+    about_text = discord.Embed(
+        title="About the bot",
+        description="This bot was created by Puppetino to monitor Twitch streams.",
+        color=discord.Color(0x9900ff)
+    )
+    about_text.set_footer(text="Sinon - Made by Puppetino")
+    await interaction.response.send_message(embed=about_text)
+
 
 
 @tasks.loop(minutes=2.5)
 async def check_streams():
     for guild_id, guild_settings in settings.items():
         await check_streams_once(guild_id)
-
 
 async def check_streams_once(guild_id):
     guild_settings = settings.get(guild_id)
@@ -177,8 +205,10 @@ async def check_streams_once(guild_id):
     if guild_id not in reported_streams:
         reported_streams[guild_id] = {}
 
+    current_stream_ids = [stream['id'] for stream in streams['data']]
+
     for stream_id, reported_stream in list(reported_streams[guild_id].items()):
-        if stream_id not in [stream['id'] for stream in streams['data']]:
+        if stream_id not in current_stream_ids:
             try:
                 await reported_stream['message'].delete()
             except discord.errors.NotFound:
@@ -199,39 +229,32 @@ async def check_streams_once(guild_id):
             message = reported_streams[guild_id][stream_id]['message']
             max_viewers = reported_streams[guild_id][stream_id]['max_viewers']
             if viewer_count > max_viewers:
-                reported_streams[guild_id][stream_id][
-                    'max_viewers'] = viewer_count
+                reported_streams[guild_id][stream_id]['max_viewers'] = viewer_count
 
-            if stream['type'] != 'live':
-                try:
-                    await message.delete()
-                except discord.errors.NotFound:
-                    pass
-                del reported_streams[guild_id][stream_id]
-            else:
-                embed = discord.Embed(
-                    title=stream_title,
-                    url=stream_url,
-                    description=
-                    f"{stream['user_name']} is live streaming {category_name} on Twitch.\n\n{description}",
-                    color=discord.Color(0x9900ff))
-                embed.set_author(name=stream['user_name'],
-                                 url=stream_url,
-                                 icon_url=user_info.get('profile_image_url'))
-                embed.add_field(name="Viewers",
-                                value=viewer_count,
-                                inline=True)
-                embed.add_field(
-                    name="Max Viewers",
-                    value=reported_streams[guild_id][stream_id]['max_viewers'],
-                    inline=True)
-                embed.set_thumbnail(url=stream['thumbnail_url'])
-                embed.set_footer(text="Sinon - Made by Puppetino")
+            embed = discord.Embed(
+                title=stream_title,
+                url=stream_url,
+                description=f"{stream['user_name']} is live streaming {category_name} on Twitch.\n\n{description}",
+                color=discord.Color(0x9900ff)
+            )
+            embed.set_author(
+                name=stream['user_name'],
+                url=stream_url,
+                icon_url=user_info.get('profile_image_url')
+            )
+            embed.add_field(name="Viewers", value=str(viewer_count), inline=True)
+            embed.add_field(
+                name="Max Viewers",
+                value=str(reported_streams[guild_id][stream_id]['max_viewers']),
+                inline=True
+            )
+            embed.set_thumbnail(url=stream['thumbnail_url'])
+            embed.set_footer(text="Sinon - Made by Puppetino")
 
-                try:
-                    await message.edit(embed=embed)
-                except discord.errors.NotFound:
-                    pass
+            try:
+                await message.edit(embed=embed)
+            except discord.errors.NotFound:
+                pass
         else:
             reported_streams[guild_id][stream_id] = {
                 'max_viewers': viewer_count
@@ -239,21 +262,20 @@ async def check_streams_once(guild_id):
             embed = discord.Embed(
                 title=stream_title,
                 url=stream_url,
-                description=
-                f"{stream['user_name']} is live streaming {category_name} on Twitch.\n\n{description}",
-                color=discord.Color(0x9900ff))
-            embed.set_author(name=stream['user_name'],
-                             url=stream_url,
-                             icon_url=user_info.get('profile_image_url'))
+                description=f"{stream['user_name']} is live streaming {category_name} on Twitch.\n\n{description}",
+                color=discord.Color(0x9900ff)
+            )
+            embed.set_author(
+                name=stream['user_name'],
+                url=stream_url,
+                icon_url=user_info.get('profile_image_url')
+            )
             embed.add_field(name="Viewers", value=viewer_count, inline=True)
-            embed.add_field(name="Max Viewers",
-                            value=viewer_count,
-                            inline=True)
+            embed.add_field(name="Max Viewers", value=viewer_count, inline=True)
             embed.set_thumbnail(url=stream['thumbnail_url'])
             embed.set_footer(text="Sinon - Made by Puppetino")
 
             message = await channel.send(embed=embed)
             reported_streams[guild_id][stream_id]['message'] = message
-
 
 client.run(DISCORD_TOKEN)
