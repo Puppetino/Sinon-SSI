@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import subprocess
 
 # List of required packages
-required_packages = ['discord.py', 'requests', 'discord-py-slash-command', 'python-dotenv']
+required_packages = ['discord.py', 'requests', 'python-dotenv']
 
 # Function to check if a package is installed
 def is_package_installed(package_name):
