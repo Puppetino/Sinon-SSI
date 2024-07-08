@@ -5,6 +5,14 @@ import requests
 from discord import app_commands, Intents
 from discord.ext import tasks, commands
 from dotenv import load_dotenv
+import subprocess
+
+# List of required packages
+required_packages = ['discord.py', 'requests', 'discord-py-slash-command', 'python-dotenv']
+
+# Install required packages using pip
+for package in required_packages:
+    subprocess.run(['pip', 'install', package])
 
 
 # Load environment variables from .env file
