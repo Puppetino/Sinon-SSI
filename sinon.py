@@ -261,9 +261,13 @@ async def setup_command(interaction: discord.Interaction):
     async def callback(interaction):
         selected_channel_id = channel_select.values[0]
         selected_channel = discord.utils.get(interaction.guild.text_channels, id=selected_channel_id)
-        settings[guild_id]['channel_id'] = selected_channel_id
-        save_settings()
-        await interaction.response.send_message(f"Channel {selected_channel.mention} selected successfully!")
+    
+        if selected_channel is not None:
+            settings[guild_id]['channel_id'] = selected_channel_id
+            save_settings()
+            await interaction.response.send_message(f"Channel {selected_channel.mention} selected successfully!")
+        else:
+            await interaction.response.send_message("The selected channel could not be found.")
 
     channel_select.callback = callback
 
