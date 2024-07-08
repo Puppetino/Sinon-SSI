@@ -257,31 +257,22 @@ async def setup_command(interaction: discord.Interaction):
     )
 
     # Callback function to handle the selected channel
-    async def channel_callback(interaction):
-        selected_channel_id = channel_select.values[0]
-        selected_channel = discord.utils.get(interaction.guild.text_channels, id=selected_channel_id)
-    
-        if selected_channel is not None:
-            settings[guild_id]['channel_id'] = selected_channel_id
+    async def channel_callback(interaction: discord.Interaction) -> None:
+        await interaction.response.defer()
+        assert interaction.data is not None and "custom_id" in interaction.data, "Invalid interaction data"
+        if interaction.data.get("values"):
+            selected_channel_id = interaction.data.get("values")[0]
+            selected_channel = interaction.guild.get_channel(int(selected_channel_id))
+            await interaction.followup.send(f"The {selected_channel.name} channel has been selected", ephemeral=True)
+            
+
+            # Save the channel ID in the settings
+            settings[guild_id]['channel_id'] = selected_channel.id
             save_settings()
 
-            # Create an input text field for the Twitch category
-            twitch_category_input = discord.ui.TextInput(
-                label="Enter the desired Twitch category",
-                placeholder="Enter the category",
-                style=discord.TextStyle.short,
-                custom_id="twitch_category_input"
-            )
-
-            # Create a view with the input field
-            twitch_category_view = discord.ui.View()
-            twitch_category_view.add_item(twitch_category_input)
-
-            # Send the input field as a follow-up message
-            await interaction.followup.send("Please enter the desired Twitch category:", view=twitch_category_view)
-
+            await interaction.message.delete()
         else:
-            await interaction.response.send_message("The selected channel could not be found.")
+            await interaction.followup.send("No option selected", ephemeral=True)
 
     channel_select.callback = channel_callback
 
@@ -289,17 +280,16 @@ async def setup_command(interaction: discord.Interaction):
     channel_view = discord.ui.View()
     channel_view.add_item(channel_select)
 
-    # Send the Select view
-    await interaction.response.send_message("Please select a channel:", view=channel_view)
-
-    # Complete embed
+    # send a embed with the select menu
     embed = discord.Embed(
-        title="Setup complete",
-        description=f"Channel set to {channel_select.values[0]}",
+        title="Select a channel",
+        description="Please select a channel to set as the report channel.",
         color=discord.Color(0x9900ff)
     )
     embed.set_footer(text="Sinon - Made by Puppetino")
-    await interaction.followup.send(embed=embed)
+
+    # Send the Select view
+    await interaction.response.send_message(embed=embed, view=channel_view)
 
     
 
