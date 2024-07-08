@@ -3,16 +3,28 @@ import json
 import discord
 import requests
 from discord import app_commands, Intents
-from discord.ext import tasks, commands
+from discord.ext import tasks
 from dotenv import load_dotenv
 import subprocess
 
 # List of required packages
 required_packages = ['discord.py', 'requests', 'discord-py-slash-command', 'python-dotenv']
 
-# Install required packages using pip
+# Function to check if a package is installed
+def is_package_installed(package_name):
+    result = subprocess.run(['pip', 'show', package_name], capture_output=True, text=True)
+    return result.returncode == 0
+
+# Install required packages using pip if not already installed
 for package in required_packages:
-    subprocess.run(['pip', 'install', package])
+    if not is_package_installed(package):
+        print(f"Installing {package}...")
+        subprocess.run(['pip', 'install', package])
+    else:
+        print(f"{package} is already installed.")
+
+print("All required packages are installed.")
+
 
 
 # Load environment variables from .env file
