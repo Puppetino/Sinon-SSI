@@ -240,7 +240,6 @@ async def set_twitch_category(interaction: discord.Interaction, category: str):
         check_streams.start()
 
 
-# Command to guide through setting up the bot
 @tree.command(name="setup", description="Guide through setting up the bot")
 @has_allowed_role()
 async def setup_command(interaction: discord.Interaction):
@@ -258,18 +257,33 @@ async def setup_command(interaction: discord.Interaction):
     )
 
     # Callback function to handle the selected channel
-    async def callback(interaction):
+    async def channel_callback(interaction):
         selected_channel_id = channel_select.values[0]
         selected_channel = discord.utils.get(interaction.guild.text_channels, id=selected_channel_id)
     
         if selected_channel is not None:
             settings[guild_id]['channel_id'] = selected_channel_id
             save_settings()
-            await interaction.response.send_message(f"Channel {selected_channel.mention} selected successfully!")
+
+            # Create an input text field for the Twitch category
+            twitch_category_input = discord.ui.TextInput(
+                label="Enter the desired Twitch category",
+                placeholder="Enter the category",
+                style=discord.TextStyle.short,
+                custom_id="twitch_category_input"
+            )
+
+            # Create a view with the input field
+            twitch_category_view = discord.ui.View()
+            twitch_category_view.add_item(twitch_category_input)
+
+            # Send the input field as a follow-up message
+            await interaction.followup.send("Please enter the desired Twitch category:", view=twitch_category_view)
+
         else:
             await interaction.response.send_message("The selected channel could not be found.")
 
-    channel_select.callback = callback
+    channel_select.callback = channel_callback
 
     # Create the Select view with the Select menu
     channel_view = discord.ui.View()
@@ -278,15 +292,16 @@ async def setup_command(interaction: discord.Interaction):
     # Send the Select view
     await interaction.response.send_message("Please select a channel:", view=channel_view)
 
-    setup_text = discord.Embed(
-        title="Setting up Sinon Bot",
-        description="To set the channel for stream updates, use the `/set_report_channel` command.\n"
-                    "To set the Twitch category to monitor, use the `/set_twitch_category` command.\n"
-                    "To set the role allowed to use bot commands, use the `/set_allowed_role` command.",
+    # Complete embed
+    embed = discord.Embed(
+        title="Setup complete",
+        description=f"Channel set to {channel_select.values[0]}",
         color=discord.Color(0x9900ff)
     )
-    setup_text.set_footer(text="Sinon - Made by Puppetino")
-    await interaction.response.send_message(embed=setup_text)
+    embed.set_footer(text="Sinon - Made by Puppetino")
+    await interaction.followup.send(embed=embed)
+
+    
 
     
 
