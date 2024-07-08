@@ -233,7 +233,12 @@ async def set_twitch_category(interaction: discord.Interaction, category: str):
         color=discord.Color(0x9900ff)
     )
     embed.set_footer(text="Sinon - Made by Puppetino")
-    await interaction.response.send_message(embed=embed)
+    
+    try:
+        await interaction.response.send_message(embed=embed)
+    except discord.errors.NotFound as e:
+        print(f"Ignoring NotFound error: {e}")
+
     if settings[guild_id].get('channel_id'):
         await check_streams_once(guild_id)
     if settings[guild_id].get('channel_id') and not check_streams.is_running():
