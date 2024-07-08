@@ -260,12 +260,14 @@ async def setup_command(interaction: discord.Interaction):
     async def channel_callback(interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         assert interaction.data is not None and "custom_id" in interaction.data, "Invalid interaction data"
+        guild_id = str(interaction.guild_id)
+        if guild_id not in settings:
+            settings[guild_id] = {}
         if interaction.data.get("values"):
             selected_channel_id = interaction.data.get("values")[0]
             selected_channel = interaction.guild.get_channel(int(selected_channel_id))
             await interaction.followup.send(f"The {selected_channel.name} channel has been selected", ephemeral=True)
-            
-
+        
             # Save the channel ID in the settings
             settings[guild_id]['channel_id'] = selected_channel.id
             save_settings()
@@ -359,6 +361,10 @@ async def check_streams_once(guild_id):
         return
 
     channel = client.get_channel(channel_id)
+    if channel is None:
+        print(f"Channel with ID {channel_id} does not exist")
+        return
+    
     streams = await get_twitch_streams(category_name)
 
     if guild_id not in reported_streams:
