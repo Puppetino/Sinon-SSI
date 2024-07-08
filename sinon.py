@@ -2,10 +2,11 @@ import os
 import json
 import discord
 import requests
-from discord import app_commands, Intents
-from discord.ext import tasks
-from dotenv import load_dotenv
 import subprocess
+import asyncio
+from discord.ext import tasks
+from discord import app_commands, Intents
+from dotenv import load_dotenv
 
 
 # List of required packages
@@ -44,6 +45,7 @@ TWITCH_ACCESS_TOKEN = os.getenv('TWITCH_ACCESS_TOKEN')
 intents = Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
+client.tree = tree
 
 
 # Global variables to store settings and reported streams
@@ -83,15 +85,18 @@ async def on_ready():
             check_streams.start()
     
     # Set custom status
-    await client.change_presence(activity=discord.CustomActivity(name="Stream Sniping on Twitch"))
+    #await client.change_presence(activity=discord.CustomActivity(name="Stream Sniping on Twitch"))
+
+    # Dev status
+    await client.change_presence(activity=discord.CustomActivity(name="In Dev Mode")) 
 
 
-# Helper function to check if the user has the required role
-def has_required_role(interaction, required_role_name=None):
+# Helper function to check if the user has the allowed role
+def has_allowed_role(interaction, allowed_role_name=None):
     guild_id = str(interaction.guild_id)
-    if required_role_name:
+    if allowed_role_name:
         user_roles = [role.name for role in interaction.user.roles]
-        return required_role_name in user_roles
+        return allowed_role_name in user_roles
     else:
         if interaction.user.guild_permissions.administrator:
             return True
@@ -196,7 +201,7 @@ async def set_allowed_role(interaction: discord.Interaction, role: discord.Role)
     await interaction.response.send_message(embed=embed)
 
 
-# Command to set report channel with allowed role check
+# Command to set report channel
 @tree.command(name="set_report_channel", description="Set the channel for stream updates")
 @has_allowed_role()
 async def set_report_channel(interaction: discord.Interaction, channel: discord.TextChannel):
@@ -218,7 +223,7 @@ async def set_report_channel(interaction: discord.Interaction, channel: discord.
         check_streams.start()
 
 
-# Command to set Twitch category with allowed role check
+# Command to set Twitch category
 @tree.command(name="set_twitch_category", description="Set the Twitch category to monitor")
 @has_allowed_role()
 async def set_twitch_category(interaction: discord.Interaction, category: str):
@@ -245,62 +250,26 @@ async def set_twitch_category(interaction: discord.Interaction, category: str):
         check_streams.start()
 
 
+# Setup command
 @tree.command(name="setup", description="Guide through setting up the bot")
 @has_allowed_role()
-async def setup_command(interaction: discord.Interaction):
+async def setup_command(interaction: discord.Interaction, channel: str, category: str):
     guild_id = str(interaction.guild_id)
+    if guild_id not in settings:
+        settings[guild_id] = {}
 
-    # Define the channel options for the Select menu
-    channel_options = []
-    for channel in interaction.guild.text_channels:
-        channel_options.append(discord.SelectOption(label=channel.name, value=channel.id))
-
-    # Create a Select menu with the channel options
-    channel_select = discord.ui.Select(
-        placeholder="Select a channel",
-        options=channel_options
-    )
-
-    # Callback function to handle the selected channel
-    async def channel_callback(interaction: discord.Interaction) -> None:
-        await interaction.response.defer()
-        assert interaction.data is not None and "custom_id" in interaction.data, "Invalid interaction data"
-        guild_id = str(interaction.guild_id)
-        if guild_id not in settings:
-            settings[guild_id] = {}
-        if interaction.data.get("values"):
-            selected_channel_id = interaction.data.get("values")[0]
-            selected_channel = interaction.guild.get_channel(int(selected_channel_id))
-            await interaction.followup.send(f"The {selected_channel.name} channel has been selected", ephemeral=True)
-        
-            # Save the channel ID in the settings
-            settings[guild_id]['channel_id'] = selected_channel.id
-            save_settings()
-
-            await interaction.message.delete()
-        else:
-            await interaction.followup.send("No option selected", ephemeral=True)
-
-    channel_select.callback = channel_callback
-
-    # Create the Select view with the Select menu
-    channel_view = discord.ui.View()
-    channel_view.add_item(channel_select)
-
-    # send a embed with the select menu
+    channel_id = int(''.join(filter(str.isdigit, channel)))
+    settings[guild_id]['channel_id'] = channel_id
+    settings[guild_id]['category_name'] = category
+    save_settings()
     embed = discord.Embed(
-        title="Select a channel",
-        description="Please select a channel to set as the report channel.",
+        title="Setup Complete",
+        description=f"Sinon will now report streams in {channel} and monitor any updates in the {category} category.\n"
+                    f"Enjoy!",
         color=discord.Color(0x9900ff)
     )
     embed.set_footer(text="Sinon - Made by Puppetino")
-
-    # Send the Select view
-    await interaction.response.send_message(embed=embed, view=channel_view)
-
-    
-
-    
+    await interaction.response.send_message(embed=embed)
 
 
 # Command to list all commands
@@ -425,6 +394,8 @@ async def check_streams_once(guild_id):
                 await message.edit(embed=embed)
             except discord.errors.NotFound:
                 pass
+            except discord.errors.Forbidden as e:
+                print(f"Missing permissions to edit message in channel: {channel.name} - {e}")
         else:
             reported_streams[guild_id][stream_id] = {
                 'max_viewers': viewer_count
@@ -445,7 +416,11 @@ async def check_streams_once(guild_id):
             embed.set_thumbnail(url=stream['thumbnail_url'])
             embed.set_footer(text="Sinon - Made by Puppetino")
 
-            message = await channel.send(embed=embed)
-            reported_streams[guild_id][stream_id]['message'] = message
+            try:
+                message = await channel.send(embed=embed)
+                reported_streams[guild_id][stream_id]['message'] = message
+            except discord.errors.Forbidden as e:
+                print(f"Missing permissions to send message in channel: {channel.name} - {e}")
+
 
 client.run(DISCORD_TOKEN)
