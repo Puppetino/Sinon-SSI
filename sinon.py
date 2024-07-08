@@ -7,13 +7,16 @@ from discord.ext import tasks
 from dotenv import load_dotenv
 import subprocess
 
+
 # List of required packages
 required_packages = ['discord.py', 'requests', 'python-dotenv']
+
 
 # Function to check if a package is installed
 def is_package_installed(package_name):
     result = subprocess.run(['pip', 'show', package_name], capture_output=True, text=True)
     return result.returncode == 0
+
 
 # Install required packages using pip if not already installed
 for package in required_packages:
@@ -24,7 +27,6 @@ for package in required_packages:
         print(f"{package} is already installed.")
 
 print("All required packages are installed.")
-
 
 
 # Load environment variables from .env file
@@ -240,19 +242,49 @@ async def set_twitch_category(interaction: discord.Interaction, category: str):
 
 # Command to guide through setting up the bot
 @tree.command(name="setup", description="Guide through setting up the bot")
+@has_allowed_role()
 async def setup_command(interaction: discord.Interaction):
-    if not has_allowed_role(interaction):
-        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-        return
+    guild_id = str(interaction.guild_id)
+
+    # Define the channel options for the Select menu
+    channel_options = []
+    for channel in interaction.guild.text_channels:
+        channel_options.append(discord.SelectOption(label=channel.name, value=channel.id))
+
+    # Create a Select menu with the channel options
+    channel_select = discord.ui.Select(
+        placeholder="Select a channel",
+        options=channel_options
+    )
+
+    # Callback function to handle the selected channel
+    async def callback(interaction):
+        selected_channel_id = channel_select.values[0]
+        selected_channel = discord.utils.get(interaction.guild.text_channels, id=selected_channel_id)
+        settings[guild_id]['channel_id'] = selected_channel_id
+        save_settings()
+        await interaction.response.send_message(f"Channel {selected_channel.mention} selected successfully!")
+
+    channel_select.callback = callback
+
+    # Create the Select view with the Select menu
+    channel_view = discord.ui.View()
+    channel_view.add_item(channel_select)
+
+    # Send the Select view
+    await interaction.response.send_message("Please select a channel:", view=channel_view)
 
     setup_text = discord.Embed(
-        title="Setup Guide",
+        title="Setting up Sinon Bot",
         description="To set the channel for stream updates, use the `/set_report_channel` command.\n"
-                    "To set the Twitch category to monitor, use the `/set_twitch_category` command.",
+                    "To set the Twitch category to monitor, use the `/set_twitch_category` command.\n"
+                    "To set the role allowed to use bot commands, use the `/set_allowed_role` command.",
         color=discord.Color(0x9900ff)
     )
     setup_text.set_footer(text="Sinon - Made by Puppetino")
     await interaction.response.send_message(embed=setup_text)
+
+    
 
 
 # Command to list all commands
