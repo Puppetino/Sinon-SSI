@@ -3,9 +3,9 @@ import json
 import discord
 import requests
 import subprocess
-import asyncio
+import logging
 from discord.ext import tasks
-from discord import app_commands, Intents
+from discord import app_commands
 from dotenv import load_dotenv
 
 
@@ -42,7 +42,7 @@ TWITCH_ACCESS_TOKEN = os.getenv('TWITCH_ACCESS_TOKEN')
 
 
 # Initialize bot
-intents = Intents.default()
+intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 client.tree = tree
@@ -83,12 +83,7 @@ async def on_ready():
     for guild_id, guild_settings in settings.items():
         if guild_settings.get("channel_id") and guild_settings.get("category_name") and not check_streams.is_running():
             check_streams.start()
-    
-    # Set custom status
-    #await client.change_presence(activity=discord.CustomActivity(name="Stream Sniping on Twitch"))
-
-    # Dev status
-    await client.change_presence(activity=discord.CustomActivity(name="In Dev Mode")) 
+    await client.change_presence(activity=discord.CustomActivity(name="Stream Sniping on Twitch"))
 
 
 # Helper function to check if the user has the allowed role
@@ -182,6 +177,21 @@ async def get_user_info(user_id):
         print(f"Error fetching user info: {e}")
         return {}
     
+
+dev_mode = False  # Initialize dev_mode as a global variable
+
+@tree.command(name="dev_mode")
+async def dev_mode(interaction: discord.Interaction):
+    global dev_mode  # Declare dev_mode as a global variable within the function
+    if interaction.user.id == 487588371443613698:
+        dev_mode = not dev_mode  # Toggle the value of dev_mode
+        await interaction.response.send_message(f"Development mode is now {'on' if dev_mode else 'off'}")
+        if dev_mode:
+            await client.change_presence(activity=discord.CustomActivity(name="In Dev Mode"))
+        else:
+            await client.change_presence(activity=discord.CustomActivity(name="Stream Sniping on Twitch"))
+    else:
+        await interaction.response.send_message("You don't have permission to use this command.")
 
 # Command to set allowed role
 @tree.command(name="set_allowed_role", description="Set roles allowed to use bot commands")
