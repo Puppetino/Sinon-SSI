@@ -3,7 +3,13 @@ import json
 import discord
 import requests
 from discord import app_commands, Intents
-from discord.ext import tasks
+from discord.ext import tasks, commands
+from dotenv import load_dotenv
+
+
+# Load environment variables from .env file
+load_dotenv()
+
 
 # Get environment variables
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
@@ -11,15 +17,18 @@ TWITCH_CLIENT_ID = os.getenv('TWITCH_CLIENT_ID')
 TWITCH_CLIENT_SECRET = os.getenv('TWITCH_CLIENT_SECRET')
 TWITCH_ACCESS_TOKEN = os.getenv('TWITCH_ACCESS_TOKEN')
 
+
 # Initialize bot
 intents = Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
+
 # Global variables to store settings and reported streams
 settings_file = "settings.json"
 settings = {}
 reported_streams = {}
+
 
 # Load settings from file
 def load_settings():
@@ -33,11 +42,14 @@ def load_settings():
     else:
         settings = {}
 
+
 # Save settings to file
 def save_settings():
     with open(settings_file, "w") as f:
         json.dump(settings, f)
 
+
+# Event handler for when the bot is ready
 @client.event
 async def on_ready():
     await tree.sync()
@@ -47,8 +59,42 @@ async def on_ready():
     for guild_id, guild_settings in settings.items():
         if guild_settings.get("channel_id") and guild_settings.get("category_name") and not check_streams.is_running():
             check_streams.start()
+    
+    # Set custom status
+    await client.change_presence(activity=discord.CustomActivity(name="Stream Sniping on Twitch"))
 
-# Delete all messages in the report channel for all guilds
+
+# Helper function to check if the user has the required role
+def has_required_role(interaction, required_role_name=None):
+    guild_id = str(interaction.guild_id)
+    if required_role_name:
+        user_roles = [role.name for role in interaction.user.roles]
+        return required_role_name in user_roles
+    else:
+        if interaction.user.guild_permissions.administrator:
+            return True
+        allowed_roles = settings.get(guild_id, {}).get('allowed_roles', [])
+        user_roles = [role.id for role in interaction.user.roles]
+        return any(role in allowed_roles for role in user_roles)
+
+
+# Decorator to check if the user has the allowed role
+def has_allowed_role():
+    async def predicate(interaction: discord.Interaction):
+        guild_id = str(interaction.guild_id)
+        role_id = settings.get(guild_id, {}).get('allowed_role')
+        if role_id:
+            role = interaction.guild.get_role(role_id)
+            if role in interaction.user.roles or interaction.user.guild_permissions.administrator:
+                return True
+        else:
+            if interaction.user.guild_permissions.administrator:
+                return True
+        return False
+    return app_commands.check(predicate)
+
+
+# Delete all messages sent by the bot in the report channel for all guilds
 async def delete_all_messages():
     for guild_id, guild_settings in settings.items():
         channel_id = guild_settings.get('channel_id')
@@ -56,14 +102,17 @@ async def delete_all_messages():
             channel = client.get_channel(channel_id)
             if channel:
                 try:
-                    await channel.purge()
+                    async for message in channel.history(limit=None):
+                        if message.author == client.user:
+                            await message.delete()
                     reported_streams[guild_id] = {}
                 except discord.Forbidden:
                     print(f"Missing permissions to purge messages in channel: {channel.name}")
                 except discord.HTTPException as e:
                     print(f"Failed to purge messages in channel: {channel.name} - {e}")
 
-# Helper functions
+
+# Helper functions to get Twitch streams
 async def get_twitch_streams(category_name):
     try:
         game_url = f"https://api.twitch.tv/helix/games?name={category_name}"
@@ -81,6 +130,8 @@ async def get_twitch_streams(category_name):
         print(f"Error fetching streams: {e}")
         return {'data': []}
 
+
+# Helper function to get user info
 async def get_user_info(user_id):
     try:
         url = f"https://api.twitch.tv/helix/users?id={user_id}"
@@ -103,8 +154,29 @@ async def get_user_info(user_id):
     except Exception as e:
         print(f"Error fetching user info: {e}")
         return {}
+    
 
+# Command to set allowed role
+@tree.command(name="set_allowed_role", description="Set roles allowed to use bot commands")
+@has_allowed_role()
+async def set_allowed_role(interaction: discord.Interaction, role: discord.Role):
+    guild_id = str(interaction.guild_id)
+    if guild_id not in settings:
+        settings[guild_id] = {}
+    settings[guild_id]['allowed_role'] = role.id
+    save_settings()
+    embed = discord.Embed(
+        title="Allowed role set",
+        description=f"The role {role.mention} is now allowed to use certain bot commands.",
+        color=discord.Color(0x9900ff)
+    )
+    embed.set_footer(text="Sinon - Made by Puppetino")
+    await interaction.response.send_message(embed=embed)
+
+
+# Command to set report channel with allowed role check
 @tree.command(name="set_report_channel", description="Set the channel for stream updates")
+@has_allowed_role()
 async def set_report_channel(interaction: discord.Interaction, channel: discord.TextChannel):
     guild_id = str(interaction.guild_id)
     if guild_id not in settings:
@@ -123,7 +195,10 @@ async def set_report_channel(interaction: discord.Interaction, channel: discord.
     if settings[guild_id].get('category_name') and not check_streams.is_running():
         check_streams.start()
 
+
+# Command to set Twitch category with allowed role check
 @tree.command(name="set_twitch_category", description="Set the Twitch category to monitor")
+@has_allowed_role()
 async def set_twitch_category(interaction: discord.Interaction, category: str):
     guild_id = str(interaction.guild_id)
     if guild_id not in settings:
@@ -142,8 +217,14 @@ async def set_twitch_category(interaction: discord.Interaction, category: str):
     if settings[guild_id].get('channel_id') and not check_streams.is_running():
         check_streams.start()
 
+
+# Command to guide through setting up the bot
 @tree.command(name="setup", description="Guide through setting up the bot")
 async def setup_command(interaction: discord.Interaction):
+    if not has_allowed_role(interaction):
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+        return
+
     setup_text = discord.Embed(
         title="Setup Guide",
         description="To set the channel for stream updates, use the `/set_report_channel` command.\n"
@@ -153,6 +234,8 @@ async def setup_command(interaction: discord.Interaction):
     setup_text.set_footer(text="Sinon - Made by Puppetino")
     await interaction.response.send_message(embed=setup_text)
 
+
+# Command to list all commands
 @tree.command(name="help", description="List all commands")
 async def help_command(interaction: discord.Interaction):
     help_text = discord.Embed(
@@ -164,26 +247,41 @@ async def help_command(interaction: discord.Interaction):
         name="List of available commands:",
         value="`/set_report_channel` - Set the channel for stream updates\n"
               "`/set_twitch_category` - Set the Twitch category to monitor\n"
+              "`/set_allowed_role` - Set roles allowed to use bot commands\n"
               "`/setup` - Guide through setting up the bot\n"
               "`/help` - List all commands\n"
-              "`/about` - Information about the bot\n"
-              "`/delete_all_messages` - Delete all messages in the report channel",
+              "`/about` - Information about the bot\n",
         inline=False)
     help_text.set_footer(text="Sinon - Made by Puppetino")
     await interaction.response.send_message(embed=help_text)
 
+
+# Command to get information about the bot
 @tree.command(name="about", description="About the bot")
 async def about_command(interaction: discord.Interaction):
     about_text = discord.Embed(
-        title="About the bot",
-        description="This bot was created by Puppetino to monitor Twitch streams.",
+        title="About Sinon Bot",
+        description=(
+            "Welcome to Sinon, your dedicated Twitch stream monitor bot! 🎮\n\n"
+            "Sinon was created with the purpose of helping communities stay updated with the latest streams "
+            "in their favorite categories on Twitch. Whether you're a streamer, viewer, or community manager, "
+            "Sinon offers a seamless way to keep your Discord server informed about ongoing live streams.\n\n"
+            "Features include:\n"
+            "• Real-time updates on Twitch streams\n"
+            "• Customizable report channels\n"
+            "• Specific Twitch category monitoring\n"
+            "• User-friendly setup commands\n\n"
+            "To get started, use the `/setup` command to configure the bot for your server. "
+            "Need help? Use the `/help` command to see a list of all available commands and their descriptions.\n\n"
+            "Created by Puppetino, Sinon is here to ensure you never miss a live stream again. Happy streaming! 🚀"
+        ),
         color=discord.Color(0x9900ff)
     )
     about_text.set_footer(text="Sinon - Made by Puppetino")
     await interaction.response.send_message(embed=about_text)
 
 
-
+# Check for new streams every 2.5 minutes
 @tasks.loop(minutes=2.5)
 async def check_streams():
     for guild_id, guild_settings in settings.items():

@@ -1,9 +1,9 @@
-{"1258848496933408778": {
-    "channel_id": 1258850217810464788, 
-    "category_name": "BattleCore Arena"
-    }, 
+{
+    "1258848496933408778": {
+        "channel_id": 1258850217810464788, 
+        "category_name": "BattleCore Arena", 
+        "allowed_role": 1259811780201549914}, 
     "878889635827286066": {
         "category_name": "BattleCore Arena", 
-        "channel_id": 1259579552376557711
-    }
+        "channel_id": 1259579552376557711}
 }

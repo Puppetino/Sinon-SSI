@@ -1,3 +1,4 @@
 discord.py
 requests
 discord-py-slash-command
+python-dotenv
