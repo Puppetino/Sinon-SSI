@@ -13,6 +13,7 @@ DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 
 # Initialize bot
 intents = discord.Intents.default()
+intents.message_content = True  # Request the message content intent
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 
@@ -31,6 +32,8 @@ async def on_ready():
 
     if dev_mode:
         await bot.change_presence(activity=discord.CustomActivity(name="In Developer Mode"))
+    else:
+        await bot.change_presence(activity=discord.CustomActivity(name="Stream Sniping on Twitch"))
     
     await delete_all_messages(bot, settings)  # Clear messages as needed
     
@@ -45,8 +48,6 @@ async def on_ready():
                 print(f"Missing channel_id for guild ID {guild_id}")
             if not category_name:
                 print(f"Missing category_name for guild ID {guild_id}")
-
-    await bot.change_presence(activity=discord.CustomActivity(name="Stream Sniping on Twitch"))
 
 
 # Define the periodic task
