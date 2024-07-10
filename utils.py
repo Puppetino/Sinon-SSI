@@ -1,7 +1,8 @@
 import json
-import os
 import discord
 import asyncio
+import logging
+
 
 # Load settings
 def load_settings():
@@ -17,6 +18,8 @@ def save_settings(settings):
     with open('settings.json', 'w') as f:
         json.dump(settings, f, indent=4)
 
+
+# Check if user has allowed role
 def has_allowed_role(interaction, settings):
     guild_id = str(interaction.guild_id)
     if interaction.user.guild_permissions.administrator:
@@ -26,6 +29,7 @@ def has_allowed_role(interaction, settings):
         role = interaction.guild.get_role(role_id)
         return role in interaction.user.roles
     return False
+
 
 # Purge all messages in a channel
 async def delete_all_messages(bot, settings):
@@ -38,7 +42,7 @@ async def delete_all_messages(bot, settings):
                     async for message in channel.history(limit=None):
                         if message.author == bot.user:
                             await message.delete()
-                            await asyncio.sleep(1)
+                            await asyncio.sleep(0.5)
                     bot.reported_streams[guild_id] = {}
                 except discord.Forbidden:
                     print(f"Missing permissions to purge messages in channel: {channel.name}")

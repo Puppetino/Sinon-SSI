@@ -5,7 +5,9 @@ import aiohttp
 from dotenv import load_dotenv
 
 
+# Load environment variables
 load_dotenv()
+
 
 # Access environment variables
 TWITCH_CLIENT_ID = os.getenv('TWITCH_CLIENT_ID')
@@ -13,6 +15,7 @@ TWITCH_CLIENT_SECRET = os.getenv('TWITCH_CLIENT_SECRET')
 TWITCH_ACCESS_TOKEN = os.getenv('TWITCH_ACCESS_TOKEN')
 
 
+# Define the get twitch streams function
 async def get_twitch_streams(category_name):
     try:
         async with aiohttp.ClientSession() as session:
@@ -34,6 +37,8 @@ async def get_twitch_streams(category_name):
         print(f"Error fetching streams for {category_name}: {e}")
         return {'data': []}
 
+
+# Define the get user info function
 async def get_user_info(user_id):
     try:
         async with aiohttp.ClientSession() as session:
@@ -56,6 +61,8 @@ async def get_user_info(user_id):
         print(f"Error fetching user info: {e}")
         return {}
     
+
+# Define the send notification function
 async def send_notification(channel, embed):
     try:
         message = await channel.send(embed=embed)
@@ -76,7 +83,7 @@ async def send_notification(channel, embed):
 
 
 # Define the once-off check streams function
-async def check_streams_once(bot, settings, guild_id, category_name):
+async def check_twitch_streams(bot, settings, guild_id, category_name):
     guild_settings = settings.get('guilds', {}).get(guild_id)
     if not guild_settings:
         return
