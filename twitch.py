@@ -3,6 +3,7 @@ import discord
 import asyncio
 import aiohttp
 from dotenv import load_dotenv
+from utils import delete_all_messages
 
 
 # Load environment variables
@@ -101,6 +102,7 @@ async def check_twitch_streams(bot, settings, guild_id, category_name):
 
     if not streams.get('data'):
         print(f"No streams found for category {category_name}")
+        await delete_all_messages(channel)
         return
 
     if guild_id not in bot.reported_streams:
