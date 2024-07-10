@@ -151,7 +151,10 @@ def setup_commands(bot, settings):
                 color=discord.Color(0x9900ff)
             )
             embed.set_footer(text="Sinon - Made by Puppetino")
-            await interaction.response.send_message(embed=embed)
+            try:
+                await interaction.response.send_message(embed=embed)
+            except discord.errors.NotFound as e:
+                print(f"Ignoring NotFound error: {e}")
 
             # Update bot presence for all guilds
             activity_name = "In Developer Mode" if settings["dev_mode"] else "Stream Sniping on Twitch"
