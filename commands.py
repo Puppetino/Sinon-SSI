@@ -1,11 +1,9 @@
 import discord
 from utils import has_allowed_role, save_settings, load_settings
 
-
 # Setup for the commands
 def setup_commands(bot, settings):
     tree = bot.tree
-
 
     # Command to set allowed role
     @tree.command(name="set_allowed_role", description="Set roles allowed to use bot commands")
@@ -26,7 +24,6 @@ def setup_commands(bot, settings):
         else:
             await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
 
-
     # Command to set report channel
     @tree.command(name="set_report_channel", description="Set the channel for stream updates")
     async def set_report_channel(interaction: discord.Interaction, channel: discord.TextChannel):
@@ -45,7 +42,6 @@ def setup_commands(bot, settings):
             await interaction.response.send_message(embed=embed)
         else:
             await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
-
 
     # Command to set Twitch category
     @tree.command(name="set_twitch_category", description="Set the Twitch category to monitor")
@@ -70,7 +66,6 @@ def setup_commands(bot, settings):
         else:
             await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
 
-
     # Setup command
     @tree.command(name="setup", description="Guide through setting up the bot")
     async def setup_command(interaction: discord.Interaction, channel: str, category: str):
@@ -94,7 +89,6 @@ def setup_commands(bot, settings):
         else:
             await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
 
-
     # Command to list all commands
     @tree.command(name="help", description="List all commands")
     async def help_command(interaction: discord.Interaction):
@@ -114,7 +108,6 @@ def setup_commands(bot, settings):
             inline=False)
         help_text.set_footer(text="Sinon - Made by Puppetino")
         await interaction.response.send_message(embed=help_text)
-
 
     # Command to get information about the bot
     @tree.command(name="about", description="About the bot")
@@ -139,7 +132,6 @@ def setup_commands(bot, settings):
         )
         about_text.set_footer(text="Sinon - Made by Puppetino")
         await interaction.response.send_message(embed=about_text)
-
 
     # Command to enable/disable developer mode 
     @tree.command(name="dev_mode", description="Enable or disable developer mode")

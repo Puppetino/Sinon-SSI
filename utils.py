@@ -1,8 +1,6 @@
 import json
 import discord
 import asyncio
-import logging
-
 
 # Load settings
 def load_settings():
@@ -12,12 +10,10 @@ def load_settings():
     except (json.JSONDecodeError, FileNotFoundError):
         return {'dev_mode': False, 'guilds': {}}
     
-
 # Save settings
 def save_settings(settings):
     with open('settings.json', 'w') as f:
         json.dump(settings, f, indent=4)
-
 
 # Check if user has allowed role
 def has_allowed_role(interaction, settings):
@@ -29,7 +25,6 @@ def has_allowed_role(interaction, settings):
         role = interaction.guild.get_role(role_id)
         return role in interaction.user.roles
     return False
-
 
 # Purge all messages in a channel
 async def delete_all_messages(bot, settings):
@@ -60,3 +55,14 @@ async def delete_all_messages(bot, settings):
                 print(f"Channel with ID {channel_id} does not exist")
         else:
             print(f"No channel_id found for guild ID {guild_id}")
+
+# Delete guild data
+def delete_guild_data(guild_id):
+    settings = load_settings()
+    
+    if 'guilds' in settings and guild_id in settings['guilds']:
+        del settings['guilds'][guild_id]
+        print(f"Deleted data for guild ID: {guild_id}")
+        save_settings(settings)
+    else:
+        print(f"No data found for guild ID: {guild_id}")
