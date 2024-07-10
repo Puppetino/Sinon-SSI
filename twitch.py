@@ -62,6 +62,30 @@ async def get_user_info(user_id):
         print(f"Error fetching user info: {e}")
         return {}
     
+# Define the report_no_streams function
+async def report_no_streams(guild_id, bot, settings):
+    guild_settings = settings.get('guilds', {}).get(guild_id)
+    if not guild_settings:
+        return
+
+    channel_id = guild_settings.get('channel_id')
+    if not channel_id:
+        return
+
+    channel = bot.get_channel(channel_id)
+    if channel is None:
+        print(f"Channel with ID {channel_id} does not exist")
+        return
+
+    embed = discord.Embed(
+        title="No streams found",
+        description="There are no streams currently live in this category.",
+        color=discord.Color(0x9900ff)
+    )
+    embed.set_footer(text="Sinon - Made by Puppetino")
+
+    message = await channel.send(embed=embed)
+    
 
 # Define the send notification function
 async def send_notification(channel, embed):
@@ -102,8 +126,16 @@ async def check_twitch_streams(bot, settings, guild_id, category_name):
 
     if not streams.get('data'):
         print(f"No streams found for category {category_name}")
-        await delete_all_messages(channel)
-        return
+        if guild_id not in bot.reported_streams or 'message' in bot.reported_streams[guild_id]:
+            await report_no_streams(guild_id, bot, settings)
+        else:
+            return
+    else:
+        if guild_id in bot.reported_streams and 'message' in bot.reported_streams[guild_id]:
+            try:
+                await bot.reported_streams[guild_id]['message'].delete()
+            except discord.errors.NotFound:
+                pass
 
     if guild_id not in bot.reported_streams:
         bot.reported_streams[guild_id] = {}
