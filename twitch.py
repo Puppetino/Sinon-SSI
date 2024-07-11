@@ -74,6 +74,14 @@ async def report_no_streams(guild_id, bot, settings, category_name):
     # Check if a no-streams message has already been sent
     if guild_id in bot.reported_streams and 'no_streams_message' in bot.reported_streams[guild_id]:
         return
+    
+    # Delete Embeds of previous streams
+    for stream_id, reported_stream in bot.reported_streams[guild_id].items():
+        if stream_id != 'no_streams_message':
+            try:
+                await reported_stream['message'].delete()
+            except discord.errors.NotFound:
+                pass
 
     embed = discord.Embed(
         title="No streams found",
@@ -198,7 +206,6 @@ async def check_twitch_streams(bot, settings, guild_id, category_name):
 
     streams = await get_streams_by_game_id(game_id)
     if not streams:
-        print(f"No streams found for category {category_name}")
         await report_no_streams(guild_id, bot, settings, category_name)
         return
 

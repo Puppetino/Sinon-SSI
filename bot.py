@@ -31,6 +31,7 @@ tree = bot.tree
 async def check_streams():
     for guild_id, guild_settings in settings.get('guilds', {}).items():
         category_name = guild_settings.get('category_name')
+        print(f"Checking streams for guild ID {guild_id}: {category_name}")
         await check_twitch_streams(bot, settings, guild_id, category_name)
 
 # Define on_ready
