@@ -1,5 +1,5 @@
 import discord
-from utils import has_allowed_role, save_settings, load_settings
+from utils import has_allowed_role, save_settings, load_settings, logger
 
 # Setup for the commands
 def setup_commands(bot, settings):
@@ -62,7 +62,7 @@ def setup_commands(bot, settings):
             try:
                 await interaction.response.send_message(embed=embed)
             except discord.errors.NotFound as e:
-                print(f"Ignoring NotFound error: {e}")
+                logger.error(f"Ignoring NotFound error: {e}")
         else:
             await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
 
@@ -154,7 +154,7 @@ def setup_commands(bot, settings):
             try:
                 await interaction.response.send_message(embed=embed)
             except discord.errors.NotFound as e:
-                print(f"Ignoring NotFound error: {e}")
+                logger.error(f"Ignoring NotFound error: {e}")
 
             # Update bot presence for all guilds
             activity_name = "In Developer Mode" if settings["dev_mode"] else "Stream Sniping on Twitch"

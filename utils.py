@@ -1,6 +1,18 @@
 import json
 import discord
 import asyncio
+import logging
+
+# Basic logging setup
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s',
+                    handlers=[
+                        logging.FileHandler('bot.log'), 
+                        logging.StreamHandler()
+                        ])
+
+# create a logger
+logger = logging.getLogger(__name__)
 
 # Load settings
 def load_settings():

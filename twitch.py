@@ -3,6 +3,7 @@ import discord
 import asyncio
 import aiohttp
 from dotenv import load_dotenv
+from utils import logger
 
 # Load environment variables
 load_dotenv()
@@ -24,7 +25,7 @@ async def fetch_from_twitch(url, params=None):
                 response.raise_for_status()
                 return await response.json()
         except aiohttp.ClientError as e:
-            print(f"HTTP error: {e}")
+            logger.error(f"HTTP error: {e}")
             return None
 
 # Twitch API functions
@@ -68,7 +69,7 @@ async def report_no_streams(guild_id, bot, settings, category_name):
 
     channel = bot.get_channel(channel_id)
     if channel is None:
-        print(f"Channel with ID {channel_id} does not exist")
+        logger.error(f"Channel with ID {channel_id} does not exist")
         return
 
     # Check if a no-streams message has already been sent
@@ -102,17 +103,17 @@ async def send_notification(channel, embed):
         message = await channel.send(embed=embed)
         return message
     except discord.Forbidden:
-        print(f"Missing permissions to send message to channel: {channel.name}")
+        logger.error(f"Missing permissions to send message to channel: {channel.name}")
     except discord.HTTPException as e:
         if e.status == 429:
             retry_after = e.retry_after
-            print(f"Rate limited. Retrying after {retry_after} seconds.")
+            logger.error(f"Rate limited. Retrying after {retry_after} seconds.")
             await asyncio.sleep(retry_after)
             return await send_notification(channel, embed)  # Retry sending the message
         else:
-            print(f"Failed to send message to channel: {channel.name} - {e}")
+            logger.error(f"Failed to send message to channel: {channel.name} - {e}")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
     return None
 
 # Create stream embed message
@@ -173,7 +174,7 @@ async def update_stream_messages(bot, guild_id, channel, streams, category_name)
             except discord.errors.NotFound:
                 pass
             except discord.errors.Forbidden as e:
-                print(f"Missing permissions to edit message in channel: {channel.name} - {e}")
+                logger.error(f"Missing permissions to edit message: {e}")
         else:
             bot.reported_streams[guild_id][stream_id] = {
                 'max_viewers': viewer_count
@@ -195,12 +196,12 @@ async def check_twitch_streams(bot, settings, guild_id, category_name):
 
     channel = bot.get_channel(channel_id)
     if channel is None:
-        print(f"Channel with ID {channel_id} does not exist")
+        logger.error(f"Channel with ID {channel_id} does not exist")
         return
 
     game_id = await get_game_id(category_name)
     if not game_id:
-        print(f"No game data found for category: {category_name}")
+        logger.error(f"Category with name {category_name} does not exist")
         await report_no_streams(guild_id, bot, settings, category_name)
         return
 

@@ -2,7 +2,7 @@ import os
 import discord
 from discord.ext import tasks, commands
 from dotenv import load_dotenv
-from utils import load_settings, delete_all_messages, delete_guild_data
+from utils import load_settings, delete_all_messages, delete_guild_data, logger
 from twitch import check_twitch_streams
 from commands import setup_commands
 
@@ -31,7 +31,6 @@ tree = bot.tree
 async def check_streams():
     for guild_id, guild_settings in settings.get('guilds', {}).items():
         category_name = guild_settings.get('category_name')
-        print(f"Checking streams for guild ID {guild_id}: {category_name}")
         await check_twitch_streams(bot, settings, guild_id, category_name)
 
 # Define on_ready
@@ -42,6 +41,7 @@ async def on_ready():
     settings = load_settings()  # Load settings from settings.json
     dev_mode = settings.get('dev_mode', False)  # Default to False if 'dev_mode' is not found or is False
     print('Logged in as {0.user}'.format(bot))
+    logger.info('Logged in as {0.user}'.format(bot))
 
     if dev_mode:
         await bot.change_presence(activity=discord.CustomActivity(name="!!! In Developer Mode !!!"))
@@ -58,16 +58,16 @@ async def on_ready():
             await check_streams.start()  # Start the periodic task
         else:
             if not channel_id:
-                print(f"Missing channel_id for guild ID {guild_id}")
+                logger.error(f"Missing channel_id for guild ID {guild_id}")
             if not category_name:
-                print(f"Missing category_name for guild ID {guild_id}")
+                logger.error(f"Missing category_name for guild ID {guild_id}")
 
 # Define on_guild_remove
 @bot.event
 async def on_guild_remove(guild):
     guild_id = str(guild.id)
     delete_guild_data(guild_id)
-    print(f"Bot was removed from guild: {guild.name} (ID: {guild_id})")
+    logger.info(f"Bot was removed from guild: {guild.name} (ID: {guild_id})")
 
 # Set up commands
 setup_commands(bot, settings)
