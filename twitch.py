@@ -35,6 +35,7 @@ async def get_game_id(category_name):
     data = await fetch_from_twitch(url, params)
     if data and 'data' in data and data['data']:
         return data['data'][0]['id']
+    logger.warning(f"Game ID not found for category: {category_name}")
     return None
 
 async def get_streams_by_game_id(game_id):
@@ -55,16 +56,19 @@ async def get_user_info(user_id):
             'profile_image_url': user_info.get('profile_image_url'),
             'description': user_info.get('description')
         }
+    logger.warning(f"User info not found for user ID: {user_id}")
     return {}
 
 # Reports that no streams were found
 async def report_no_streams(guild_id, bot, settings, category_name):
     guild_settings = settings.get('guilds', {}).get(guild_id)
     if not guild_settings:
+        logger.warning(f"No settings found for guild ID: {guild_id}")
         return
 
     channel_id = guild_settings.get('channel_id')
     if not channel_id:
+        logger.warning(f"No channel ID found in settings for guild ID: {guild_id}")
         return
 
     channel = bot.get_channel(channel_id)
@@ -74,6 +78,7 @@ async def report_no_streams(guild_id, bot, settings, category_name):
 
     # Check if a no-streams message has already been sent
     if guild_id in bot.reported_streams and 'no_streams_message' in bot.reported_streams[guild_id]:
+        logger.info(f"No-streams message already sent for guild ID: {guild_id}")
         return
     
     # Delete Embeds of previous streams
@@ -101,6 +106,7 @@ async def report_no_streams(guild_id, bot, settings, category_name):
 async def send_notification(channel, embed):
     try:
         message = await channel.send(embed=embed)
+        logger.info(f"Message sent to channel: {channel.name}")
         return message
     except discord.Forbidden:
         logger.error(f"Missing permissions to send message to channel: {channel.name}")
@@ -188,10 +194,12 @@ async def update_stream_messages(bot, guild_id, channel, streams, category_name)
 async def check_twitch_streams(bot, settings, guild_id, category_name):
     guild_settings = settings.get('guilds', {}).get(guild_id)
     if not guild_settings:
+        logger.warning(f"No settings found for guild ID: {guild_id}")
         return
 
     channel_id = guild_settings.get('channel_id')
     if not channel_id or not category_name:
+        logger.warning(f"Channel ID or category name missing for guild ID: {guild_id}")
         return
 
     channel = bot.get_channel(channel_id)

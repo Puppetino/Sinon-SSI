@@ -37,7 +37,6 @@ async def check_streams():
 @bot.event
 async def on_ready():
     await bot.tree.sync()
-    global dev_mode
     settings = load_settings()  # Load settings from settings.json
     dev_mode = settings.get('dev_mode', False)  # Default to False if 'dev_mode' is not found or is False
     logger.info('Logged in as {0.user}'.format(bot))
@@ -54,7 +53,9 @@ async def on_ready():
         category_name = guild_settings.get('category_name')
         
         if channel_id and category_name:
-            await check_streams.start()  # Start the periodic task
+            # Start the periodic task if not already running
+            if not check_streams.is_running():
+                check_streams.start()
         else:
             if not channel_id:
                 logger.error(f"Missing channel_id for guild ID {guild_id}")
