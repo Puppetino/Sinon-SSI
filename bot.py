@@ -40,7 +40,6 @@ async def on_ready():
     global dev_mode
     settings = load_settings()  # Load settings from settings.json
     dev_mode = settings.get('dev_mode', False)  # Default to False if 'dev_mode' is not found or is False
-    print('Logged in as {0.user}'.format(bot))
     logger.info('Logged in as {0.user}'.format(bot))
 
     if dev_mode:

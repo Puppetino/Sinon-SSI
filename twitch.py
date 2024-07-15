@@ -117,7 +117,7 @@ async def send_notification(channel, embed):
     return None
 
 # Create stream embed message
-def create_stream_embed(stream, user_info, category_name, max_viewers=None):
+async def create_stream_embed(stream, user_info, category_name, max_viewers=None):
     stream_title = stream['title']
     stream_url = f"https://www.twitch.tv/{stream['user_name']}"
     viewer_count = stream['viewer_count']
@@ -168,7 +168,7 @@ async def update_stream_messages(bot, guild_id, channel, streams, category_name)
             if viewer_count > max_viewers:
                 bot.reported_streams[guild_id][stream_id]['max_viewers'] = viewer_count
 
-            embed = create_stream_embed(stream, user_info, category_name, max_viewers)
+            embed = await create_stream_embed(stream, user_info, category_name, max_viewers)
             try:
                 await message.edit(embed=embed)
             except discord.errors.NotFound:
@@ -179,7 +179,7 @@ async def update_stream_messages(bot, guild_id, channel, streams, category_name)
             bot.reported_streams[guild_id][stream_id] = {
                 'max_viewers': viewer_count
             }
-            embed = create_stream_embed(stream, user_info, category_name, viewer_count)
+            embed = await create_stream_embed(stream, user_info, category_name, viewer_count)
             message = await send_notification(channel, embed)
             if message:
                 bot.reported_streams[guild_id][stream_id]['message'] = message
