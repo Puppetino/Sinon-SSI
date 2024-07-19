@@ -1,0 +1,184 @@
+2024-07-19 15:09:18,838 - discord.client - WARNING - client.py:300 - PyNaCl is not installed, voice will NOT be supported
+2024-07-19 15:09:18,840 - discord.client - INFO - client.py:611 - logging in using static token
+2024-07-19 15:09:19,888 - discord.gateway - INFO - gateway.py:563 - Shard ID None has connected to Gateway (Session ID: 0727678de926a624686172b4633b85bd).
+2024-07-19 15:09:22,270 - utils - INFO - bot.py:42 - Logged in as Sinon#0170
+2024-07-19 15:09:23,007 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: stream-notifications
+2024-07-19 15:09:24,908 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: bca
+2024-07-19 15:09:29,884 - utils - INFO - utils.py:60 - Deleted 3 messages in channel: server-webhook
+2024-07-19 15:09:33,274 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:09:33,274 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:10:16,189 - discord.client - WARNING - client.py:300 - PyNaCl is not installed, voice will NOT be supported
+2024-07-19 15:10:16,191 - discord.client - INFO - client.py:611 - logging in using static token
+2024-07-19 15:10:17,338 - discord.gateway - INFO - gateway.py:563 - Shard ID None has connected to Gateway (Session ID: 0fe52845fc295be814ac3d4c6f94e76d).
+2024-07-19 15:10:19,710 - utils - INFO - bot.py:42 - Logged in as Sinon#0170
+2024-07-19 15:10:20,394 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: stream-notifications
+2024-07-19 15:10:22,281 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: bca
+2024-07-19 15:10:24,222 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: server-webhook
+2024-07-19 15:10:27,129 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:10:27,129 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:12:55,964 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 1258848496933408778
+2024-07-19 15:12:56,502 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 878889635827286066
+2024-07-19 15:12:56,725 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:12:56,725 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:12:56,725 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:15:25,964 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 1258848496933408778
+2024-07-19 15:15:26,437 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 878889635827286066
+2024-07-19 15:15:26,680 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:15:26,681 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:15:26,681 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:17:55,995 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 1258848496933408778
+2024-07-19 15:17:56,487 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 878889635827286066
+2024-07-19 15:17:56,740 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:17:56,740 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:17:56,741 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:20:25,931 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 1258848496933408778
+2024-07-19 15:20:26,403 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 878889635827286066
+2024-07-19 15:20:26,632 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:20:26,632 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:20:26,632 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:22:56,016 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 1258848496933408778
+2024-07-19 15:22:56,463 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 878889635827286066
+2024-07-19 15:22:56,689 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:22:56,689 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:22:56,689 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:25:25,979 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 1258848496933408778
+2024-07-19 15:25:26,455 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 878889635827286066
+2024-07-19 15:25:26,707 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:25:26,707 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:25:26,708 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:27:16,929 - discord.gateway - INFO - gateway.py:568 - Shard ID None has successfully RESUMED session 0fe52845fc295be814ac3d4c6f94e76d.
+2024-07-19 15:27:55,954 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 1258848496933408778
+2024-07-19 15:27:56,401 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 878889635827286066
+2024-07-19 15:27:56,624 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:27:56,625 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:27:56,625 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:28:16,490 - discord.gateway - INFO - gateway.py:568 - Shard ID None has successfully RESUMED session 0fe52845fc295be814ac3d4c6f94e76d.
+2024-07-19 15:30:25,949 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 1258848496933408778
+2024-07-19 15:30:26,431 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 878889635827286066
+2024-07-19 15:30:26,673 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:30:26,674 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:30:26,674 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:32:55,948 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 1258848496933408778
+2024-07-19 15:32:56,408 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 878889635827286066
+2024-07-19 15:32:56,649 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:32:56,649 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:32:56,649 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:35:25,985 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 1258848496933408778
+2024-07-19 15:35:26,423 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 878889635827286066
+2024-07-19 15:35:26,701 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:35:26,701 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:35:26,701 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:37:55,958 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 1258848496933408778
+2024-07-19 15:37:56,446 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 878889635827286066
+2024-07-19 15:37:56,687 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:37:56,688 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:37:56,688 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:40:26,884 - utils - INFO - twitch.py:109 - Message sent to channel: stream-notifications
+2024-07-19 15:40:28,264 - utils - INFO - twitch.py:109 - Message sent to channel: bca
+2024-07-19 15:40:28,512 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:40:28,513 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:40:28,513 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:42:58,080 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:42:58,080 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:42:58,080 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:45:27,918 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:45:27,918 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:45:27,918 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:47:57,882 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:47:57,884 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:47:57,884 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:50:27,636 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:50:27,636 - utils - ERROR - twitch.py:224 - Category with name blah does not exist
+2024-07-19 15:50:27,636 - utils - INFO - twitch.py:81 - No-streams message already sent for guild ID: 753120986450100224
+2024-07-19 15:51:36,903 - discord.client - WARNING - client.py:300 - PyNaCl is not installed, voice will NOT be supported
+2024-07-19 15:51:36,905 - discord.client - INFO - client.py:611 - logging in using static token
+2024-07-19 15:51:37,957 - discord.gateway - INFO - gateway.py:563 - Shard ID None has connected to Gateway (Session ID: 0bb10695fd22da9ff14a00c34723471f).
+2024-07-19 15:51:40,269 - utils - INFO - bot.py:42 - Logged in as Sinon#0170
+2024-07-19 15:51:40,916 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: stream-notifications
+2024-07-19 15:51:43,109 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: server-webhook
+2024-07-19 15:51:46,397 - utils - INFO - twitch.py:109 - Message sent to channel: stream-notifications
+2024-07-19 15:51:47,343 - utils - INFO - twitch.py:109 - Message sent to channel: bca
+2024-07-19 15:51:47,591 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:51:47,591 - utils - ERROR - twitch.py:240 - Category with name blah does not exist
+2024-07-19 15:52:59,590 - discord.client - WARNING - client.py:300 - PyNaCl is not installed, voice will NOT be supported
+2024-07-19 15:52:59,591 - discord.client - INFO - client.py:611 - logging in using static token
+2024-07-19 15:53:00,556 - discord.gateway - INFO - gateway.py:563 - Shard ID None has connected to Gateway (Session ID: dc1547544296cd45eb9ce1747d7e8645).
+2024-07-19 15:53:02,929 - utils - INFO - bot.py:42 - Logged in as Sinon#0170
+2024-07-19 15:53:03,772 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: stream-notifications
+2024-07-19 15:53:05,791 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: bca
+2024-07-19 15:53:07,689 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: server-webhook
+2024-07-19 15:53:09,959 - utils - INFO - twitch.py:109 - Message sent to channel: stream-notifications
+2024-07-19 15:53:10,978 - utils - INFO - twitch.py:109 - Message sent to channel: bca
+2024-07-19 15:53:11,223 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:53:11,223 - utils - ERROR - twitch.py:240 - Category with name blah does not exist
+2024-07-19 15:55:41,523 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:55:41,524 - utils - ERROR - twitch.py:240 - Category with name blah does not exist
+2024-07-19 15:58:11,096 - utils - WARNING - twitch.py:38 - Game ID not found for category: blah
+2024-07-19 15:58:11,097 - utils - ERROR - twitch.py:240 - Category with name blah does not exist
+2024-07-19 15:58:14,446 - discord.client - WARNING - client.py:300 - PyNaCl is not installed, voice will NOT be supported
+2024-07-19 15:58:14,448 - discord.client - INFO - client.py:611 - logging in using static token
+2024-07-19 15:58:15,502 - discord.gateway - INFO - gateway.py:563 - Shard ID None has connected to Gateway (Session ID: 3754979c9681c9b7fdb9b19d9ca83db6).
+2024-07-19 15:58:17,907 - utils - INFO - bot.py:42 - Logged in as Sinon#0170
+2024-07-19 15:58:18,623 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: stream-notifications
+2024-07-19 15:58:20,544 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: bca
+2024-07-19 15:58:25,458 - utils - INFO - utils.py:60 - Deleted 3 messages in channel: server-webhook
+2024-07-19 15:58:26,717 - discord.ext.tasks - ERROR - __init__.py:540 - Unhandled exception in internal background task 'check_streams'.
+Traceback (most recent call last):
+  File "C:\Users\tituh\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\tasks\__init__.py", line 241, in _loop
+    await self.coro(*args, **kwargs)
+  File "C:\Users\tituh\Desktop\Sinon\SinonBot\bot.py", line 34, in check_streams
+    await check_twitch_streams(bot, settings, guild_id, category_name)
+  File "C:\Users\tituh\Desktop\Sinon\SinonBot\twitch.py", line 237, in check_twitch_streams
+    if guild_id not in bot.reported_categories:
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Bot' object has no attribute 'reported_categories'
+2024-07-19 15:59:25,191 - asyncio - ERROR - base_events.py:1821 - Task exception was never retrieved
+future: <Task finished name='discord-ext-tasks: check_streams' coro=<Loop._loop() done, defined at C:\Users\tituh\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\tasks\__init__.py:202> exception=AttributeError("'Bot' object has no attribute 'reported_categories'")>
+Traceback (most recent call last):
+  File "C:\Users\tituh\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\tasks\__init__.py", line 266, in _loop
+    raise exc
+  File "C:\Users\tituh\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\tasks\__init__.py", line 241, in _loop
+    await self.coro(*args, **kwargs)
+  File "C:\Users\tituh\Desktop\Sinon\SinonBot\bot.py", line 34, in check_streams
+    await check_twitch_streams(bot, settings, guild_id, category_name)
+  File "C:\Users\tituh\Desktop\Sinon\SinonBot\twitch.py", line 237, in check_twitch_streams
+    if guild_id not in bot.reported_categories:
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Bot' object has no attribute 'reported_categories'
+2024-07-19 15:59:27,615 - discord.client - WARNING - client.py:300 - PyNaCl is not installed, voice will NOT be supported
+2024-07-19 15:59:27,617 - discord.client - INFO - client.py:611 - logging in using static token
+2024-07-19 15:59:28,575 - discord.gateway - INFO - gateway.py:563 - Shard ID None has connected to Gateway (Session ID: 0cd14ad6b6b8202ebfb0fa57d6a9cb36).
+2024-07-19 15:59:30,949 - utils - INFO - bot.py:42 - Logged in as Sinon#0170
+2024-07-19 15:59:31,644 - discord.ext.tasks - ERROR - __init__.py:540 - Unhandled exception in internal background task 'check_streams'.
+Traceback (most recent call last):
+  File "C:\Users\tituh\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\tasks\__init__.py", line 241, in _loop
+    await self.coro(*args, **kwargs)
+  File "C:\Users\tituh\Desktop\Sinon\SinonBot\bot.py", line 34, in check_streams
+    await check_twitch_streams(bot, settings, guild_id, category_name)
+  File "C:\Users\tituh\Desktop\Sinon\SinonBot\twitch.py", line 237, in check_twitch_streams
+    if guild_id not in bot.reported_categories:
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Bot' object has no attribute 'reported_categories'
+2024-07-19 16:05:02,327 - asyncio - ERROR - base_events.py:1821 - Task exception was never retrieved
+future: <Task finished name='discord-ext-tasks: check_streams' coro=<Loop._loop() done, defined at C:\Users\tituh\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\tasks\__init__.py:202> exception=AttributeError("'Bot' object has no attribute 'reported_categories'")>
+Traceback (most recent call last):
+  File "C:\Users\tituh\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\tasks\__init__.py", line 266, in _loop
+    raise exc
+  File "C:\Users\tituh\AppData\Local\Programs\Python\Python312\Lib\site-packages\discord\ext\tasks\__init__.py", line 241, in _loop
+    await self.coro(*args, **kwargs)
+  File "C:\Users\tituh\Desktop\Sinon\SinonBot\bot.py", line 34, in check_streams
+    await check_twitch_streams(bot, settings, guild_id, category_name)
+  File "C:\Users\tituh\Desktop\Sinon\SinonBot\twitch.py", line 237, in check_twitch_streams
+    if guild_id not in bot.reported_categories:
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Bot' object has no attribute 'reported_categories'
+2024-07-19 16:07:17,796 - discord.client - WARNING - client.py:300 - PyNaCl is not installed, voice will NOT be supported
+2024-07-19 16:07:17,798 - discord.client - INFO - client.py:611 - logging in using static token
+2024-07-19 16:07:18,762 - discord.gateway - INFO - gateway.py:563 - Shard ID None has connected to Gateway (Session ID: 4180459da7e49f82b9202b2180e6c342).
+2024-07-19 16:07:21,060 - utils - INFO - bot.py:42 - Logged in as Sinon#0170
+2024-07-19 16:07:22,720 - utils - INFO - twitch.py:122 - Message sent to channel: stream-notifications
+2024-07-19 16:07:23,707 - utils - INFO - twitch.py:122 - Message sent to channel: bca
+2024-07-19 16:07:23,964 - utils - WARNING - twitch.py:41 - Game ID not found for category: blah
+2024-07-19 16:07:24,227 - utils - ERROR - twitch.py:251 - Category with name blah does not exist
+2024-07-19 16:09:53,875 - utils - WARNING - twitch.py:41 - Game ID not found for category: blah
+2024-07-19 16:09:53,876 - utils - ERROR - twitch.py:251 - Category with name blah does not exist

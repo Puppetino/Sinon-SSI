@@ -46,27 +46,43 @@ async def delete_all_messages(bot, settings):
             channel = bot.get_channel(channel_id)
             if channel:
                 try:
-                    async for message in channel.history(limit=None):
-                        if message.author == bot.user:
-                            await message.delete()
-                            await asyncio.sleep(0.5)
+                    while True:
+                        # Fetch messages authored by the bot, up to 100 at a time
+                        messages = [msg async for msg in channel.history(limit=100) if msg.author == bot.user]
+
+                        if not messages:
+                            # No more messages to delete
+                            break
+
+                        try:
+                            # Attempt to bulk delete messages
+                            await channel.purge(limit=100, check=lambda m: m.author == bot.user)
+                            logger.info(f"Deleted {len(messages)} messages in channel: {channel.name}")
+
+                            # Wait after each successful purge
+                            await asyncio.sleep(1)
+
+                        except discord.HTTPException as e:
+                            if e.status == 429:
+                                retry_after = float(e.response.headers.get('Retry-After', 1))
+                                logger.warning(f"Rate limited: retrying after {retry_after} seconds")
+                                await asyncio.sleep(retry_after)
+                            else:
+                                logger.error(f"HTTP exception when deleting messages: {e}")
+                                break
+
+                    # Clear reported streams data for the guild
                     bot.reported_streams[guild_id] = {}
                 except discord.Forbidden:
-                    print(f"Missing permissions to purge messages in channel: {channel.name}")
+                    logger.warning(f"Missing permissions to purge messages in channel: {channel.name}")
                 except discord.HTTPException as e:
-                    if e.status == 429:
-                        retry_after = e.retry_after
-                        print(f"Rate limited when deleting messages in channel: {channel.name}. Retrying after {retry_after} seconds.")
-                        await asyncio.sleep(retry_after)
-                        await delete_all_messages(bot, settings)  # Retry deleting messages
-                    else:
-                        print(f"Failed to purge messages in channel: {channel.name} - {e}")
+                    logger.error(f"Failed to purge messages in channel: {channel.name} - {e}")
                 except Exception as e:
-                    print(f"An error occurred: {e}")
+                    logger.error(f"An unexpected error occurred: {e}")
             else:
-                print(f"Channel with ID {channel_id} does not exist")
+                logger.warning(f"Channel with ID {channel_id} does not exist")
         else:
-            print(f"No channel_id found for guild ID {guild_id}")
+            logger.warning(f"No channel_id found for guild ID {guild_id}")
 
 # Delete guild data
 def delete_guild_data(guild_id):

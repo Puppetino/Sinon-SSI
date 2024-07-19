@@ -53,8 +53,8 @@ def setup_commands(bot, settings):
             settings['guilds'][guild_id]['category_name'] = category
             save_settings(settings)
             embed = discord.Embed(
-                title="Twitch category set to",
-                description=category,
+                title="Updated category",
+                description=f"The category {category} is now being monitored on Twitch. Note that it can take up to 2.5 minutes for the category to update.",
                 color=discord.Color(0x9900ff)
             )
             embed.set_footer(text="Sinon - Made by Puppetino")

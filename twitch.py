@@ -13,6 +13,9 @@ TWITCH_CLIENT_ID = os.getenv('TWITCH_CLIENT_ID')
 TWITCH_CLIENT_SECRET = os.getenv('TWITCH_CLIENT_SECRET')
 TWITCH_ACCESS_TOKEN = os.getenv('TWITCH_ACCESS_TOKEN')
 
+# Global dictionary to track reported categories for each guild
+reported_categories = {}
+
 # Twitch API helper functions
 async def fetch_from_twitch(url, params=None):
     headers = {
@@ -58,6 +61,16 @@ async def get_user_info(user_id):
         }
     logger.warning(f"User info not found for user ID: {user_id}")
     return {}
+
+# Notify when a category does not exist
+async def report_non_existent_category(channel, category_name):
+    embed = discord.Embed(
+        title="Category Not Found",
+        description=f"The category '{category_name}' does not exist on Twitch. Please check the name and try again.",
+        color=discord.Color(0x9900ff)
+    )
+    embed.set_footer(text="Sinon - Made by Puppetino")
+    await channel.send(embed=embed)
 
 # Reports that no streams were found
 async def report_no_streams(guild_id, bot, settings, category_name):
@@ -169,11 +182,16 @@ async def update_stream_messages(bot, guild_id, channel, streams, category_name)
         user_info = await get_user_info(user_id)
 
         if stream_id in bot.reported_streams[guild_id]:
+            # Get the current message and max viewers
             message = bot.reported_streams[guild_id][stream_id]['message']
             max_viewers = bot.reported_streams[guild_id][stream_id]['max_viewers']
+            
+            # Update the max viewers if the current count is greater
             if viewer_count > max_viewers:
-                bot.reported_streams[guild_id][stream_id]['max_viewers'] = viewer_count
+                max_viewers = viewer_count
+                bot.reported_streams[guild_id][stream_id]['max_viewers'] = max_viewers
 
+            # Create a new embed with the updated viewer counts
             embed = await create_stream_embed(stream, user_info, category_name, max_viewers)
             try:
                 await message.edit(embed=embed)
@@ -182,6 +200,7 @@ async def update_stream_messages(bot, guild_id, channel, streams, category_name)
             except discord.errors.Forbidden as e:
                 logger.error(f"Missing permissions to edit message: {e}")
         else:
+            # Create new entry for the stream
             bot.reported_streams[guild_id][stream_id] = {
                 'max_viewers': viewer_count
             }
@@ -192,7 +211,16 @@ async def update_stream_messages(bot, guild_id, channel, streams, category_name)
 
 # Check Twitch streams
 async def check_twitch_streams(bot, settings, guild_id, category_name):
-    guild_settings = settings.get('guilds', {}).get(guild_id)
+    # Helper function to safely get nested dictionary values
+    def get_nested(d, keys, default=None):
+        for key in keys:
+            d = d.get(key, {})
+            if not d:
+                return default
+        return d
+
+    # Retrieve guild settings safely
+    guild_settings = get_nested(settings, ['guilds', guild_id])
     if not guild_settings:
         logger.warning(f"No settings found for guild ID: {guild_id}")
         return
@@ -202,31 +230,56 @@ async def check_twitch_streams(bot, settings, guild_id, category_name):
         logger.warning(f"Channel ID or category name missing for guild ID: {guild_id}")
         return
 
+    # Check if bot can access the channel
     channel = bot.get_channel(channel_id)
     if channel is None:
         logger.error(f"Channel with ID {channel_id} does not exist")
         return
 
-    game_id = await get_game_id(category_name)
-    if not game_id:
-        logger.error(f"Category with name {category_name} does not exist")
-        await report_no_streams(guild_id, bot, settings, category_name)
+    # Initialize reported categories for the guild if not present
+    if guild_id not in reported_categories:
+        reported_categories[guild_id] = set()
+
+    try:
+        # Fetch game ID specific to the guild
+        game_id = await get_game_id(category_name)
+        if not game_id:
+            # Check if we've already reported this category as non-existent
+            if category_name not in reported_categories[guild_id]:
+                await report_non_existent_category(channel, category_name)
+                reported_categories[guild_id].add(category_name)
+            logger.error(f"Category with name {category_name} does not exist")
+            return
+
+        # If the category is valid, remove it from the reported categories set
+        reported_categories[guild_id].discard(category_name)
+
+        # Fetch streams specific to the game ID
+        streams = await get_streams_by_game_id(game_id)
+        if not streams:
+            await report_no_streams(guild_id, bot, settings, category_name)
+            return
+    except Exception as e:
+        logger.error(f"Error fetching data from Twitch for guild {guild_id}: {str(e)}")
         return
 
-    streams = await get_streams_by_game_id(game_id)
-    if not streams:
-        await report_no_streams(guild_id, bot, settings, category_name)
-        return
-
-    # Clean up no-streams message if streams are found
-    if guild_id in bot.reported_streams and 'no_streams_message' in bot.reported_streams[guild_id]:
-        try:
-            await bot.reported_streams[guild_id]['no_streams_message'].delete()
-            del bot.reported_streams[guild_id]['no_streams_message']
-        except discord.errors.NotFound:
-            pass
-
+    # Isolate each guild's reported streams
     if guild_id not in bot.reported_streams:
         bot.reported_streams[guild_id] = {}
 
+    reported_streams = bot.reported_streams[guild_id]
+    no_streams_message = reported_streams.get('no_streams_message')
+
+    # Clean up no-streams message if streams are found
+    if no_streams_message:
+        try:
+            await no_streams_message.delete()
+            del reported_streams['no_streams_message']
+        except discord.errors.NotFound:
+            pass
+
+    # Update stream messages
     await update_stream_messages(bot, guild_id, channel, streams, category_name)
+
+    # Maintain the state isolation by resetting the guild-specific state if needed
+    bot.reported_streams[guild_id] = reported_streams
