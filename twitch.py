@@ -26,9 +26,11 @@ async def fetch_from_twitch(url, params=None):
         try:
             async with session.get(url, headers=headers, params=params) as response:
                 response.raise_for_status()
-                return await response.json()
+                data = await response.json()
+                logger.info(f"Fetched data from Twitch: {data}")
+                return data
         except aiohttp.ClientError as e:
-            logger.error(f"HTTP error: {e}")
+            logger.error(f"HTTP error while fetching Twitch data: {e}")
             return None
 
 # Twitch API functions
@@ -37,7 +39,9 @@ async def get_game_id(category_name):
     params = {'name': category_name}
     data = await fetch_from_twitch(url, params)
     if data and 'data' in data and data['data']:
-        return data['data'][0]['id']
+        game_id = data['data'][0]['id']
+        logger.info(f"Game ID for category '{category_name}': {game_id}")
+        return game_id
     logger.warning(f"Game ID not found for category: {category_name}")
     return None
 
@@ -45,7 +49,10 @@ async def get_streams_by_game_id(game_id):
     url = "https://api.twitch.tv/helix/streams"
     params = {'game_id': game_id}
     data = await fetch_from_twitch(url, params)
-    return data.get('data', []) if data else []
+    if data:
+        logger.info(f"Streams for game ID {game_id}: {data.get('data', [])}")
+        return data.get('data', [])
+    return []
 
 async def get_user_info(user_id):
     url = "https://api.twitch.tv/helix/users"
@@ -53,6 +60,7 @@ async def get_user_info(user_id):
     data = await fetch_from_twitch(url, params)
     if data and 'data' in data and data['data']:
         user_info = data['data'][0]
+        logger.info(f"User info for user ID '{user_id}': {user_info}")
         return {
             'id': user_info.get('id'),
             'name': user_info.get('display_name'),
@@ -66,11 +74,17 @@ async def get_user_info(user_id):
 async def report_non_existent_category(channel, category_name):
     embed = discord.Embed(
         title="Category Not Found",
-        description=f"The category '{category_name}' does not exist on Twitch. Please check the name and try again.",
+        description=f"The category '{category_name}' does not exist on Twitch. Please check the name and try again. Make sure you are using the correct category name, twitch category names are case-sensitive.",
         color=discord.Color(0x9900ff)
     )
     embed.set_footer(text="Sinon - Made by Puppetino")
-    await channel.send(embed=embed)
+    try:
+        await channel.send(embed=embed)
+        logger.info(f"Sent 'Category Not Found' message to channel: {channel.id}")
+    except discord.errors.Forbidden:
+        logger.error(f"Missing permissions to send message to channel: {channel.id}")
+    except discord.errors.HTTPException as e:
+        logger.error(f"Failed to send message to channel: {channel.id} - {e}")
 
 # Reports that no streams were found
 async def report_no_streams(guild_id, bot, settings, category_name):

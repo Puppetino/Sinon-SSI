@@ -44,7 +44,7 @@ def setup_commands(bot, settings):
             await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
 
     # Command to set Twitch category
-    @tree.command(name="set_twitch_category", description="Set the Twitch category to monitor")
+    @tree.command(name="set_twitch_category", description="Set or change the Twitch category")
     async def set_twitch_category(interaction: discord.Interaction, category: str):
         if has_allowed_role(interaction, settings):
             guild_id = str(interaction.guild_id)
@@ -67,7 +67,7 @@ def setup_commands(bot, settings):
             await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
 
     # Setup command
-    @tree.command(name="setup", description="Guide through setting up the bot")
+    @tree.command(name="setup", description="Initialize Setup")
     async def setup_command(interaction: discord.Interaction, channel: str, category: str):
         if has_allowed_role(interaction, settings):
             guild_id = str(interaction.guild_id)
@@ -132,6 +132,23 @@ def setup_commands(bot, settings):
         )
         about_text.set_footer(text="Sinon - Made by Puppetino")
         await interaction.response.send_message(embed=about_text)
+
+    # Command to reset settings
+    @tree.command(name="reset", description="Reset all settings")
+    async def reset_command(interaction: discord.Interaction):
+        if has_allowed_role(interaction, settings):
+            settings = load_settings()
+            settings['guilds'] = {}
+            save_settings(settings)
+            embed = discord.Embed(
+                title="Settings reset",
+                description="All settings have been reset.",
+                color=discord.Color(0x9900ff)
+            )
+            embed.set_footer(text="Sinon - Made by Puppetino")
+            await interaction.response.send_message(embed=embed)
+        else:
+            await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
 
     # Command to enable/disable developer mode 
     @tree.command(name="dev_mode", description="Enable or disable developer mode")
