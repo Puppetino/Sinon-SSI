@@ -133,22 +133,35 @@ def setup_commands(bot, settings):
         about_text.set_footer(text="Sinon - Made by Puppetino")
         await interaction.response.send_message(embed=about_text)
 
-    # Command to reset settings
-    @tree.command(name="reset", description="Reset all settings")
+    # Command to reset settings for a specific guild
+    @tree.command(name="reset", description="Reset settings for this guild")
     async def reset_command(interaction: discord.Interaction):
-        if has_allowed_role(interaction, settings):
-            settings = load_settings()
-            settings['guilds'] = {}
-            save_settings(settings)
-            embed = discord.Embed(
-                title="Settings reset",
-                description="All settings have been reset.",
-                color=discord.Color(0x9900ff)
-            )
-            embed.set_footer(text="Sinon - Made by Puppetino")
-            await interaction.response.send_message(embed=embed)
-        else:
-            await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
+        try:
+            settings = load_settings()  # Load settings fresh at command execution
+            guild_id = str(interaction.guild_id)  # Get the guild ID as a string
+
+            if has_allowed_role(interaction, settings):
+                # Reset settings only for the current guild
+                if 'guilds' in settings and guild_id in settings['guilds']:
+                    settings['guilds'][guild_id] = {}
+                    save_settings(settings)
+                    embed = discord.Embed(
+                        title="Settings reset",
+                        description=f"Settings have been reset for this guild ({interaction.guild.name}).",
+                        color=discord.Color(0x9900ff)
+                    )
+                    embed.set_footer(text="Sinon - Made by Puppetino")
+                    await interaction.response.send_message(embed=embed)
+                    logger.info(f"Settings have been reset for guild: {interaction.guild.name} by user: {interaction.user.name}")
+                else:
+                    await interaction.response.send_message("No settings found to reset for this guild.", ephemeral=True)
+                    logger.warning(f"No settings found for guild: {interaction.guild.name}")
+            else:
+                await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
+                logger.warning("User without permission attempted to reset settings.")
+        except Exception as e:
+            logger.error(f"Error in reset command: {e}")
+            await interaction.response.send_message("An error occurred while resetting settings.", ephemeral=True)
 
     # Command to enable/disable developer mode 
     @tree.command(name="dev_mode", description="Enable or disable developer mode")

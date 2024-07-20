@@ -182,3 +182,40 @@ AttributeError: 'Bot' object has no attribute 'reported_categories'
 2024-07-19 16:07:24,227 - utils - ERROR - twitch.py:251 - Category with name blah does not exist
 2024-07-19 16:09:53,875 - utils - WARNING - twitch.py:41 - Game ID not found for category: blah
 2024-07-19 16:09:53,876 - utils - ERROR - twitch.py:251 - Category with name blah does not exist
+2024-07-21 01:46:27,129 - discord.client - WARNING - client.py:300 - PyNaCl is not installed, voice will NOT be supported
+2024-07-21 01:46:27,132 - discord.client - INFO - client.py:611 - logging in using static token
+2024-07-21 01:46:28,243 - discord.gateway - INFO - gateway.py:563 - Shard ID None has connected to Gateway (Session ID: daf1efe121d43f40a69d0c99bc15ee05).
+2024-07-21 01:46:30,561 - utils - INFO - bot.py:42 - Logged in as Sinon#0170
+2024-07-21 01:46:31,413 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: stream-notifications
+2024-07-21 01:46:33,256 - utils - INFO - utils.py:60 - Deleted 1 messages in channel: bca
+2024-07-21 01:46:34,450 - utils - WARNING - utils.py:83 - Channel with ID 1254160215310602261 does not exist
+2024-07-21 01:46:34,710 - utils - INFO - twitch.py:30 - Fetched data from Twitch: {'data': [{'id': '499510', 'name': 'BattleCore Arena', 'box_art_url': 'https://static-cdn.jtvnw.net/ttv-boxart/499510-{width}x{height}.jpg', 'igdb_id': '65825'}]}
+2024-07-21 01:46:34,711 - utils - INFO - twitch.py:43 - Game ID for category 'BattleCore Arena': 499510
+2024-07-21 01:46:34,990 - utils - INFO - twitch.py:30 - Fetched data from Twitch: {'data': [], 'pagination': {}}
+2024-07-21 01:46:34,990 - utils - INFO - twitch.py:53 - Streams for game ID 499510: []
+2024-07-21 01:46:35,456 - utils - INFO - twitch.py:30 - Fetched data from Twitch: {'data': [{'id': '499510', 'name': 'BattleCore Arena', 'box_art_url': 'https://static-cdn.jtvnw.net/ttv-boxart/499510-{width}x{height}.jpg', 'igdb_id': '65825'}]}
+2024-07-21 01:46:35,457 - utils - INFO - twitch.py:43 - Game ID for category 'BattleCore Arena': 499510
+2024-07-21 01:46:35,694 - utils - INFO - twitch.py:30 - Fetched data from Twitch: {'data': [], 'pagination': {}}
+2024-07-21 01:46:35,695 - utils - INFO - twitch.py:53 - Streams for game ID 499510: []
+2024-07-21 01:46:35,921 - utils - ERROR - twitch.py:250 - Channel with ID 1254160215310602261 does not exist
+2024-07-21 01:47:46,993 - utils - INFO - commands.py:151 - Settings have been reset by user: {interaction.user.name}
+2024-07-21 01:49:04,707 - utils - INFO - twitch.py:30 - Fetched data from Twitch: {'data': [{'id': '499510', 'name': 'BattleCore Arena', 'box_art_url': 'https://static-cdn.jtvnw.net/ttv-boxart/499510-{width}x{height}.jpg', 'igdb_id': '65825'}]}
+2024-07-21 01:49:04,708 - utils - INFO - twitch.py:43 - Game ID for category 'BattleCore Arena': 499510
+2024-07-21 01:49:04,924 - utils - INFO - twitch.py:30 - Fetched data from Twitch: {'data': [], 'pagination': {}}
+2024-07-21 01:49:04,925 - utils - INFO - twitch.py:53 - Streams for game ID 499510: []
+2024-07-21 01:49:04,925 - utils - INFO - twitch.py:108 - No-streams message already sent for guild ID: 1258848496933408778
+2024-07-21 01:49:05,148 - utils - INFO - twitch.py:30 - Fetched data from Twitch: {'data': [{'id': '499510', 'name': 'BattleCore Arena', 'box_art_url': 'https://static-cdn.jtvnw.net/ttv-boxart/499510-{width}x{height}.jpg', 'igdb_id': '65825'}]}
+2024-07-21 01:49:05,149 - utils - INFO - twitch.py:43 - Game ID for category 'BattleCore Arena': 499510
+2024-07-21 01:49:05,383 - utils - INFO - twitch.py:30 - Fetched data from Twitch: {'data': [], 'pagination': {}}
+2024-07-21 01:49:05,383 - utils - INFO - twitch.py:53 - Streams for game ID 499510: []
+2024-07-21 01:49:05,384 - utils - INFO - twitch.py:108 - No-streams message already sent for guild ID: 878889635827286066
+2024-07-21 01:49:05,611 - utils - INFO - twitch.py:30 - Fetched data from Twitch: {'data': [{'id': '499510', 'name': 'BattleCore Arena', 'box_art_url': 'https://static-cdn.jtvnw.net/ttv-boxart/499510-{width}x{height}.jpg', 'igdb_id': '65825'}]}
+2024-07-21 01:49:05,611 - utils - INFO - twitch.py:43 - Game ID for category 'Battlecore Arena': 499510
+2024-07-21 01:49:05,840 - utils - INFO - twitch.py:30 - Fetched data from Twitch: {'data': [], 'pagination': {}}
+2024-07-21 01:49:05,841 - utils - INFO - twitch.py:53 - Streams for game ID 499510: []
+2024-07-21 01:49:05,841 - utils - ERROR - twitch.py:277 - Error fetching data from Twitch for guild 753120986450100224: '753120986450100224'
+2024-07-21 01:49:35,609 - discord.client - WARNING - client.py:300 - PyNaCl is not installed, voice will NOT be supported
+2024-07-21 01:49:35,611 - discord.client - INFO - client.py:611 - logging in using static token
+2024-07-21 01:49:36,513 - discord.gateway - INFO - gateway.py:563 - Shard ID None has connected to Gateway (Session ID: 4b4a771039042e53d7c55f3bb2da1d59).
+2024-07-21 01:49:38,813 - utils - INFO - bot.py:42 - Logged in as Sinon#0170
+2024-07-21 01:50:54,796 - utils - INFO - commands.py:155 - Settings have been reset for guild: test by user: puppetino
