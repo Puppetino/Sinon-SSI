@@ -17,21 +17,26 @@ TWITCH_ACCESS_TOKEN = os.getenv('TWITCH_ACCESS_TOKEN')
 reported_categories = {}
 
 # Twitch API helper functions
-async def fetch_from_twitch(url, params=None):
+async def fetch_from_twitch(url, params=None, retries=3):
     headers = {
         'Client-ID': TWITCH_CLIENT_ID,
         'Authorization': f'Bearer {TWITCH_ACCESS_TOKEN}'
     }
     async with aiohttp.ClientSession() as session:
-        try:
-            async with session.get(url, headers=headers, params=params) as response:
-                response.raise_for_status()
-                data = await response.json()
-                logger.info(f"Fetched data from Twitch: {data}")
-                return data
-        except aiohttp.ClientError as e:
-            logger.error(f"HTTP error while fetching Twitch data: {e}")
-            return None
+        for attempt in range(retries):
+            try:
+                async with session.get(url, headers=headers, params=params) as response:
+                    response.raise_for_status()
+                    data = await response.json()
+                    logger.info(f"Fetched data from Twitch: {data}")
+                    return data
+            except aiohttp.ClientError as e:
+                logger.error(f"HTTP error while fetching Twitch data: {e}")
+                if attempt < retries - 1:
+                    await asyncio.sleep(2)  # Wait before retrying
+            except Exception as e:
+                logger.error(f"An unexpected error occurred: {e}")
+    return None
 
 # Twitch API functions
 async def get_game_id(category_name):
