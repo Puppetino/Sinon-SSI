@@ -128,7 +128,15 @@ async def report_no_streams(guild_id, bot, settings, category_name):
     )
     embed.set_footer(text="Sinon - Made by Puppetino")
 
-    message = await channel.send(embed=embed)
+    try:
+        message = await channel.send(embed=embed)
+        logger.info(f"Sent 'No streams found' message to channel: {channel.id}")
+    except discord.errors.Forbidden:
+        logger.error(f"Missing permissions to send 'No streams found' message to channel: {channel.id}")
+        return
+    except discord.errors.HTTPException as e:
+        logger.error(f"Failed to send 'No streams found' message to channel: {channel.id} - {e}")
+        return
 
     if guild_id not in bot.reported_streams:
         bot.reported_streams[guild_id] = {}
@@ -214,10 +222,11 @@ async def update_stream_messages(bot, guild_id, channel, streams, category_name)
             embed = await create_stream_embed(stream, user_info, category_name, max_viewers)
             try:
                 await message.edit(embed=embed)
+                logger.info(f"Updated message for stream {stream_id} in channel {channel.id}")
             except discord.errors.NotFound:
-                pass
+                logger.warning(f"Message for stream {stream_id} not found for editing in channel {channel.id}")
             except discord.errors.Forbidden as e:
-                logger.error(f"Missing permissions to edit message: {e}")
+                logger.error(f"Missing permissions to edit message for stream {stream_id}: {e}")
         else:
             # Create new entry for the stream
             bot.reported_streams[guild_id][stream_id] = {
@@ -227,6 +236,7 @@ async def update_stream_messages(bot, guild_id, channel, streams, category_name)
             message = await send_notification(channel, embed)
             if message:
                 bot.reported_streams[guild_id][stream_id]['message'] = message
+                logger.info(f"Sent new message for stream {stream_id} in channel {channel.id}")
 
 # Check Twitch streams
 async def check_twitch_streams(bot, settings, guild_id, category_name):
@@ -294,8 +304,9 @@ async def check_twitch_streams(bot, settings, guild_id, category_name):
         try:
             await no_streams_message.delete()
             del reported_streams['no_streams_message']
+            logger.info(f"Deleted 'No streams' message for guild ID: {guild_id}")
         except discord.errors.NotFound:
-            pass
+            logger.warning(f"No streams message not found for deletion in guild ID: {guild_id}")
 
     # Update stream messages
     await update_stream_messages(bot, guild_id, channel, streams, category_name)
