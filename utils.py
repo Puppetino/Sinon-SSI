@@ -57,7 +57,6 @@ async def delete_all_messages(bot, settings):
                         try:
                             # Attempt to bulk delete messages
                             await channel.purge(limit=100, check=lambda m: m.author == bot.user)
-                            logger.info(f"Deleted {len(messages)} messages in channel: {channel.name}")
 
                             # Wait after each successful purge
                             await asyncio.sleep(1)
