@@ -291,22 +291,23 @@ async def check_twitch_streams(bot, settings, guild_id, category_name):
 
         # Fetch streams specific to the game ID
         streams = await get_streams_by_game_id(game_id)
+        
         if streams:
-            # Clean up the 'no streams' message if any streams are found
-            no_streams_message = reported_streams[guild_id].pop('no_streams_message', None)
+            # Reset no-streams message state if streams are found
+            no_streams_message = reported_streams[guild_id].get('no_streams_message')
             if no_streams_message:
                 try:
                     await no_streams_message.delete()
+                    del reported_streams[guild_id]['no_streams_message']
                     logger.info(f"Deleted 'No streams' message for guild ID: {guild_id}")
                 except discord.errors.NotFound:
-                    logger.warning(f"No streams message not found for deletion in guild ID: {guild_id}")
+                    pass
             # Update stream messages
             await update_stream_messages(bot, guild_id, channel, streams, category_name)
         else:
-            await report_no_streams(guild_id, bot, settings, category_name)
+            # Only send the no-streams message if it's confirmed that no streams are live
+            if not any(s for s in reported_streams[guild_id] if s != 'no_streams_message'):
+                await report_no_streams(guild_id, bot, settings, category_name)
     except Exception as e:
         logger.error(f"Error fetching data from Twitch for guild {guild_id}: {str(e)}")
         return
-
-    # Maintain the state isolation by resetting the guild-specific state if needed
-    bot.reported_streams[guild_id] = reported_streams[guild_id]
