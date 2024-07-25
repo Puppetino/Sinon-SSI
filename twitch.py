@@ -115,7 +115,7 @@ async def report_no_streams(guild_id, bot, settings, category_name):
         return
     
     # Delete Embeds of previous streams
-    for stream_id, reported_stream in bot.reported_streams[guild_id].items():
+    for stream_id, reported_stream in reported_streams[guild_id].items():
         if stream_id != 'no_streams_message':
             try:
                 await reported_stream['message'].delete()
