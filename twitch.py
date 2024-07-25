@@ -115,12 +115,15 @@ async def report_no_streams(guild_id, bot, settings, category_name):
         return
     
     # Delete Embeds of previous streams
-    for stream_id, reported_stream in reported_streams[guild_id].items():
+    for stream_id, reported_stream in list(reported_streams[guild_id].items()):
         if stream_id != 'no_streams_message':
             try:
                 await reported_stream['message'].delete()
+                logger.info(f"Deleted message for stream {stream_id} in guild ID {guild_id}")
             except discord.errors.NotFound:
-                pass
+                logger.warning(f"Stream message for {stream_id} not found for deletion in guild ID {guild_id}")
+            except discord.errors.Forbidden as e:
+                logger.error(f"Missing permissions to delete message for stream {stream_id}: {e}")
 
     embed = discord.Embed(
         title="No streams found",
@@ -192,7 +195,7 @@ async def create_stream_embed(stream, user_info, category_name, max_viewers=None
 # Update stream messages
 async def update_stream_messages(bot, guild_id, channel, streams, category_name):
     current_stream_ids = {stream['id'] for stream in streams}
-    
+
     # Clean up offline streams only if the current API call confirms they are offline
     for stream_id, reported_stream in list(reported_streams[guild_id].items()):
         if stream_id != 'no_streams_message' and stream_id not in current_stream_ids:
@@ -200,7 +203,9 @@ async def update_stream_messages(bot, guild_id, channel, streams, category_name)
                 await reported_stream['message'].delete()
                 logger.info(f"Deleted message for stream {stream_id} in channel {channel.id}")
             except discord.errors.NotFound:
-                pass
+                logger.warning(f"Message for stream {stream_id} not found for deletion in channel {channel.id}")
+            except discord.errors.Forbidden as e:
+                logger.error(f"Missing permissions to delete message for stream {stream_id}: {e}")
             del reported_streams[guild_id][stream_id]
 
     for stream in streams:
@@ -301,10 +306,12 @@ async def check_twitch_streams(bot, settings, guild_id, category_name):
                     del reported_streams[guild_id]['no_streams_message']
                     logger.info(f"Deleted 'No streams' message for guild ID: {guild_id}")
                 except discord.errors.NotFound:
-                    pass
+                    logger.warning(f"No streams message not found for deletion in guild ID: {guild_id}")
             # Update stream messages
             await update_stream_messages(bot, guild_id, channel, streams, category_name)
         else:
+            # Log that no streams were found
+            logger.info(f"No streams found in category {category_name} for guild ID: {guild_id}")
             # Only send the no-streams message if it's confirmed that no streams are live
             if not any(s for s in reported_streams[guild_id] if s != 'no_streams_message'):
                 await report_no_streams(guild_id, bot, settings, category_name)
