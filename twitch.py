@@ -313,7 +313,8 @@ async def check_twitch_streams(bot, settings, guild_id, category_name):
             # Log that no streams were found
             logger.info(f"No streams found in category {category_name} for guild ID: {guild_id}")
             # Only send the no-streams message if it's confirmed that no streams are live
-            if not any(s for s in reported_streams[guild_id] if s != 'no_streams_message'):
+            if len(reported_streams[guild_id]) == 0 or (len(reported_streams[guild_id]) == 1 and 'no_streams_message' in reported_streams[guild_id]):
+                logger.info(f"Sending 'No streams' message for guild ID: {guild_id}")
                 await report_no_streams(guild_id, bot, settings, category_name)
     except Exception as e:
         logger.error(f"Error fetching data from Twitch for guild {guild_id}: {str(e)}")
