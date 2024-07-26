@@ -18,7 +18,7 @@ reported_categories = {}
 reported_streams = {}
 
 # Twitch API helper functions
-async def fetch_from_twitch(url, params=None, retries=3):
+async def fetch_from_twitch(url, params=None, retries=3, backoff_factor=1):
     headers = {
         'Client-ID': TWITCH_CLIENT_ID,
         'Authorization': f'Bearer {TWITCH_ACCESS_TOKEN}'
@@ -34,9 +34,11 @@ async def fetch_from_twitch(url, params=None, retries=3):
             except aiohttp.ClientError as e:
                 logger.error(f"HTTP error while fetching Twitch data: {e}")
                 if attempt < retries - 1:
-                    await asyncio.sleep(2)  # Wait before retrying
+                    await asyncio.sleep(backoff_factor * (2 ** attempt))  # Exponential backoff
             except Exception as e:
                 logger.error(f"An unexpected error occurred: {e}")
+                if attempt < retries - 1:
+                    await asyncio.sleep(backoff_factor * (2 ** attempt))
     return None
 
 # Twitch API functions
@@ -44,7 +46,10 @@ async def get_game_id(category_name):
     url = "https://api.twitch.tv/helix/games"
     params = {'name': category_name}
     data = await fetch_from_twitch(url, params)
-    if data and 'data' in data and data['data']:
+    if data is None:
+        logger.error(f"Failed to fetch game ID for category: {category_name} due to connection issues.")
+        return None
+    if 'data' in data and data['data']:
         game_id = data['data'][0]['id']
         logger.info(f"Game ID for category '{category_name}': {game_id}")
         return game_id
@@ -283,6 +288,9 @@ async def check_twitch_streams(bot, settings, guild_id, category_name):
     try:
         # Fetch game ID specific to the guild
         game_id = await get_game_id(category_name)
+        if not game_id and category_name not in reported_categories[guild_id]:
+            logger.error(f"Failed to get game ID for category {category_name} due to connection or API issues.")
+            return
         if not game_id:
             # Check if we've already reported this category as non-existent
             if category_name not in reported_categories[guild_id]:
