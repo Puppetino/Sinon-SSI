@@ -288,9 +288,6 @@ async def check_twitch_streams(bot, settings, guild_id, category_name):
     try:
         # Fetch game ID specific to the guild
         game_id = await get_game_id(category_name)
-        if not game_id and category_name not in reported_categories[guild_id]:
-            logger.error(f"Failed to get game ID for category {category_name} due to connection or API issues.")
-            return
         if not game_id:
             # Check if we've already reported this category as non-existent
             if category_name not in reported_categories[guild_id]:
@@ -320,8 +317,19 @@ async def check_twitch_streams(bot, settings, guild_id, category_name):
         else:
             # Log that no streams were found
             logger.info(f"No streams found in category {category_name} for guild ID: {guild_id}")
+            # Ensure all messages for streams are deleted
+            for stream_id, reported_stream in list(reported_streams[guild_id].items()):
+                if stream_id != 'no_streams_message':
+                    try:
+                        await reported_stream['message'].delete()
+                        logger.info(f"Deleted message for stream {stream_id} in guild ID {guild_id}")
+                    except discord.errors.NotFound:
+                        logger.warning(f"Stream message for {stream_id} not found for deletion in guild ID {guild_id}")
+                    except discord.errors.Forbidden as e:
+                        logger.error(f"Missing permissions to delete message for stream {stream_id}: {e}")
+                    del reported_streams[guild_id][stream_id]
             # Only send the no-streams message if it's confirmed that no streams are live
-            if len(reported_streams[guild_id]) == 0 or (len(reported_streams[guild_id]) == 1 and 'no_streams_message' in reported_streams[guild_id]):
+            if not any(s for s in reported_streams[guild_id] if s != 'no_streams_message'):
                 logger.info(f"Sending 'No streams' message for guild ID: {guild_id}")
                 await report_no_streams(guild_id, bot, settings, category_name)
     except Exception as e:
