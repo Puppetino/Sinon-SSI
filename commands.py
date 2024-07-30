@@ -1,5 +1,5 @@
 import discord
-from utils import has_allowed_role, save_settings, load_settings, logger
+from utils import has_allowed_role, save_settings, load_settings, log_with_guild_info
 
 # Setup for the commands
 def setup_commands(bot, settings):
@@ -8,8 +8,8 @@ def setup_commands(bot, settings):
     # Command to set allowed role
     @tree.command(name="set_allowed_role", description="Set roles allowed to use bot commands")
     async def set_allowed_role(interaction: discord.Interaction, role: discord.Role):
+        guild_id = str(interaction.guild_id)
         if has_allowed_role(interaction, settings):
-            guild_id = str(interaction.guild_id)
             if guild_id not in settings['guilds']:
                 settings['guilds'][guild_id] = {}
             settings['guilds'][guild_id]['allowed_role'] = role.id
@@ -21,14 +21,16 @@ def setup_commands(bot, settings):
             )
             embed.set_footer(text="Sinon - Made by Puppetino")
             await interaction.response.send_message(embed=embed)
+            log_with_guild_info(guild_id, 'info', f"Allowed role {role.name} set by {interaction.user.name}")
         else:
             await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
+            log_with_guild_info(guild_id, 'warning', f"User {interaction.user.name} without permission attempted to set allowed role")
 
     # Command to set report channel
     @tree.command(name="set_report_channel", description="Set the channel for stream updates")
     async def set_report_channel(interaction: discord.Interaction, channel: discord.TextChannel):
+        guild_id = str(interaction.guild_id)
         if has_allowed_role(interaction, settings):
-            guild_id = str(interaction.guild_id)
             if guild_id not in settings['guilds']:
                 settings['guilds'][guild_id] = {}
             settings['guilds'][guild_id]['channel_id'] = channel.id
@@ -40,14 +42,16 @@ def setup_commands(bot, settings):
             )
             embed.set_footer(text="Sinon - Made by Puppetino")
             await interaction.response.send_message(embed=embed)
+            log_with_guild_info(guild_id, 'info', f"Report channel set to {channel.name} by {interaction.user.name}")
         else:
             await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
+            log_with_guild_info(guild_id, 'warning', f"User {interaction.user.name} without permission attempted to set report channel")
 
     # Command to set Twitch category
     @tree.command(name="set_twitch_category", description="Set or change the Twitch category")
     async def set_twitch_category(interaction: discord.Interaction, category: str):
+        guild_id = str(interaction.guild_id)
         if has_allowed_role(interaction, settings):
-            guild_id = str(interaction.guild_id)
             if guild_id not in settings['guilds']:
                 settings['guilds'][guild_id] = {}
             settings['guilds'][guild_id]['category_name'] = category
@@ -61,16 +65,18 @@ def setup_commands(bot, settings):
 
             try:
                 await interaction.response.send_message(embed=embed)
+                log_with_guild_info(guild_id, 'info', f"Twitch category set to {category} by {interaction.user.name}")
             except discord.errors.NotFound as e:
-                logger.error(f"Ignoring NotFound error: {e}")
+                log_with_guild_info(guild_id, 'error', f"Ignoring NotFound error: {e}")
         else:
             await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
+            log_with_guild_info(guild_id, 'warning', f"User {interaction.user.name} without permission attempted to set Twitch category")
 
     # Setup command
     @tree.command(name="setup", description="Initialize Setup")
     async def setup_command(interaction: discord.Interaction, channel: str, category: str):
+        guild_id = str(interaction.guild_id)
         if has_allowed_role(interaction, settings):
-            guild_id = str(interaction.guild_id)
             if guild_id not in settings['guilds']:
                 settings['guilds'][guild_id] = {}
 
@@ -86,12 +92,15 @@ def setup_commands(bot, settings):
             )
             embed.set_footer(text="Sinon - Made by Puppetino")
             await interaction.response.send_message(embed=embed)
+            log_with_guild_info(guild_id, 'info', f"Setup completed by {interaction.user.name} with channel {channel} and category {category}")
         else:
             await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
+            log_with_guild_info(guild_id, 'warning', f"User {interaction.user.name} without permission attempted to run setup")
 
     # Command to list all commands
     @tree.command(name="help", description="List all commands")
     async def help_command(interaction: discord.Interaction):
+        guild_id = str(interaction.guild_id)
         help_text = discord.Embed(
             title="Available Commands",
             description="",
@@ -108,10 +117,12 @@ def setup_commands(bot, settings):
             inline=False)
         help_text.set_footer(text="Sinon - Made by Puppetino")
         await interaction.response.send_message(embed=help_text)
+        log_with_guild_info(guild_id, 'info', f"User {interaction.user.name} requested help")
 
     # Command to get information about the bot
     @tree.command(name="about", description="About the bot")
     async def about_command(interaction: discord.Interaction):
+        guild_id = str(interaction.guild_id)
         about_text = discord.Embed(
             title="About Sinon Bot",
             description=(
@@ -132,13 +143,14 @@ def setup_commands(bot, settings):
         )
         about_text.set_footer(text="Sinon - Made by Puppetino")
         await interaction.response.send_message(embed=about_text)
+        log_with_guild_info(guild_id, 'info', f"User {interaction.user.name} requested about info")
 
     # Command to reset settings for a specific guild
     @tree.command(name="reset", description="Reset settings for this guild")
     async def reset_command(interaction: discord.Interaction):
+        guild_id = str(interaction.guild_id)
         try:
             settings = load_settings()  # Load settings fresh at command execution
-            guild_id = str(interaction.guild_id)  # Get the guild ID as a string
 
             if has_allowed_role(interaction, settings):
                 # Reset settings only for the current guild
@@ -152,20 +164,21 @@ def setup_commands(bot, settings):
                     )
                     embed.set_footer(text="Sinon - Made by Puppetino")
                     await interaction.response.send_message(embed=embed)
-                    logger.info(f"Settings have been reset for guild: {interaction.guild.name} by user: {interaction.user.name}")
+                    log_with_guild_info(guild_id, 'info', f"Settings have been reset for guild: {interaction.guild.name} by user: {interaction.user.name}")
                 else:
                     await interaction.response.send_message("No settings found to reset for this guild.", ephemeral=True)
-                    logger.warning(f"No settings found for guild: {interaction.guild.name}")
+                    log_with_guild_info(guild_id, 'warning', f"No settings found for guild: {interaction.guild.name}")
             else:
                 await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
-                logger.warning("User without permission attempted to reset settings.")
+                log_with_guild_info(guild_id, 'warning', f"User {interaction.user.name} without permission attempted to reset settings")
         except Exception as e:
-            logger.error(f"Error in reset command: {e}")
+            log_with_guild_info(guild_id, 'error', f"Error in reset command: {e}")
             await interaction.response.send_message("An error occurred while resetting settings.", ephemeral=True)
 
     # Command to enable/disable developer mode 
     @tree.command(name="dev_mode", description="Enable or disable developer mode")
     async def dev_mode_command(interaction: discord.Interaction):
+        guild_id = str(interaction.guild_id)
         if interaction.user.id == 487588371443613698:  # Check if the user ID matches
             settings = load_settings()
 
@@ -183,11 +196,13 @@ def setup_commands(bot, settings):
             embed.set_footer(text="Sinon - Made by Puppetino")
             try:
                 await interaction.response.send_message(embed=embed)
+                log_with_guild_info(guild_id, 'info', f"Developer mode {'enabled' if dev_mode else 'disabled'} by user: {interaction.user.name}")
             except discord.errors.NotFound as e:
-                logger.error(f"Ignoring NotFound error: {e}")
+                log_with_guild_info(guild_id, 'error', f"Ignoring NotFound error: {e}")
 
             # Update bot presence for all guilds
             activity_name = "In Developer Mode" if settings["dev_mode"] else "Stream Sniping on Twitch"
             await bot.change_presence(activity=discord.CustomActivity(name=activity_name))
         else:
             await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
+            log_with_guild_info(guild_id, 'warning', f"User {interaction.user.name} without permission attempted to toggle developer mode")
