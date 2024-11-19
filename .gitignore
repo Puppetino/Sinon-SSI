@@ -1,3 +1,4 @@
 .env
-settings.json
-bot.log
+channel_settings.json
+role_permissions.json
+targets.json
