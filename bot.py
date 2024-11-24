@@ -31,7 +31,7 @@ twitch_access_token = None
 game_id = None
 channel_settings_file = "channel_settings.json"
 role_permissions_file = "role_permissions.json"
-streams = {}
+stream_messages_per_guild = {}
 
 # Tracking messages and max viewers
 no_stream_message = {}
@@ -221,7 +221,7 @@ async def delete_old_messages():
 # Task to check Twitch API every minute
 @tasks.loop(minutes=1)
 async def check_twitch_streams():
-    global no_stream_message, stream_messages, max_viewers
+    global no_stream_message, stream_messages_per_guild, max_viewers
     streams_data = await get_twitch_streams()
     current_streams = {stream["id"]: stream for stream in streams_data}
 
@@ -230,7 +230,10 @@ async def check_twitch_streams():
         if channel is None:
             continue
 
+        guild_stream_messages = stream_messages_per_guild.setdefault(guild_id, {})
+        
         if not current_streams:
+            # Handle no streams case per guild
             if guild_id not in no_stream_message:
                 embed = discord.Embed(
                     title="No live streams found",
@@ -241,10 +244,12 @@ async def check_twitch_streams():
                 no_stream_message[guild_id] = await channel.send(embed=embed)
             continue
 
+        # Delete "no stream" message if new streams appear
         if guild_id in no_stream_message:
             await no_stream_message[guild_id].delete()
             del no_stream_message[guild_id]
 
+        # Handle live streams per guild
         for stream_id, stream in current_streams.items():
             streamer_name = stream["user_name"]
             user_info = await get_user_info(streamer_name)
@@ -273,16 +278,18 @@ async def check_twitch_streams():
             if profile_image:
                 embed.set_author(name=streamer_name, url=f"https://www.twitch.tv/{streamer_name}", icon_url=profile_image)
 
-            if stream_id not in stream_messages:
-                stream_messages[stream_id] = await channel.send(embed=embed)
+            # Send or update the stream message in this guild
+            if stream_id not in guild_stream_messages:
+                guild_stream_messages[stream_id] = await channel.send(embed=embed)
             else:
-                await stream_messages[stream_id].edit(embed=embed)
+                await guild_stream_messages[stream_id].edit(embed=embed)
 
-    for stream_id in list(stream_messages):
-        if stream_id not in current_streams:
-            await stream_messages[stream_id].delete()
-            del stream_messages[stream_id]
-            del max_viewers[stream_id]
+        # Handle streams that ended
+        for stream_id in list(guild_stream_messages):
+            if stream_id not in current_streams:
+                await guild_stream_messages[stream_id].delete()
+                del guild_stream_messages[stream_id]
+                del max_viewers[stream_id]
 
 # Command to set the channel for updates
 @tree.command(name="set_channel", description="Set the channel for Twitch updates")
