@@ -233,7 +233,13 @@ async def check_twitch_streams():
         guild_stream_messages = stream_messages_per_guild.setdefault(guild_id, {})
         
         if not current_streams:
-            # Handle no streams case per guild
+            # Delete all existing stream messages before sending the "no streams" message
+            for stream_id in list(guild_stream_messages):
+                await guild_stream_messages[stream_id].delete()
+                del guild_stream_messages[stream_id]
+                del max_viewers[stream_id]
+            
+            # Handle "no streams" case per guild
             if guild_id not in no_stream_message:
                 embed = discord.Embed(
                     title="No live streams found",
