@@ -532,7 +532,8 @@ async def on_ready():
     await delete_old_messages()
     print(f"Successfully logged in as {bot.user}")
     await get_game_id()
-    check_twitch_streams.start()
+    if not check_twitch_streams.is_running():
+        check_twitch_streams.start()
     await bot.change_presence(activity=discord.CustomActivity(name="Stream Sniping on Twitch"))
 
 # Run the bot
