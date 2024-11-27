@@ -303,23 +303,63 @@ async def check_twitch_streams():
                 if stream_id in max_viewers:
                     del max_viewers[stream_id]
 
-# Command to reload settings             
-@tree.command(name="reload_settings", description="Reload channel settings and role permissions")
+# Command to reload channel settings
+@tree.command(name="reload_settings", description="Reload channel settings, clear messages, and prepare for a fresh start.")
 async def reload_settings(interaction: discord.Interaction):
     if not is_admin(interaction):
         await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
         return
 
+    # Reload channel settings
     reload_channel_settings()
-    save_channel_settings()
-    embed = discord.Embed(
-        title="Settings Reloaded",
-        description="Channel settings and role permissions have been reloaded.",
-        color=discord.Color.purple()
-    )
-    embed.set_footer(text="Sinon - Made by Puppetino")
-    await interaction.response.send_message(embed=embed)
+    guild_id = str(interaction.guild.id)
 
+    # Check if the guild has a configured channel
+    if guild_id not in channel_settings:
+        await interaction.response.send_message("No channel is set for updates in this server.", ephemeral=True)
+        return
+
+    channel_id = channel_settings[guild_id]
+    channel = bot.get_channel(channel_id)
+
+    if channel is None:
+        await interaction.response.send_message("The configured channel no longer exists or cannot be accessed.", ephemeral=True)
+        return
+
+    try:
+        # Delete all bot messages in the channel
+        async for message in channel.history(limit=100):
+            if message.author == bot.user:
+                await message.delete()
+
+        # Clear tracking for the guild
+        if guild_id in stream_messages:
+            del stream_messages[guild_id]
+        if guild_id in no_stream_message:
+            del no_stream_message[guild_id]
+
+        # Send confirmation
+        embed = discord.Embed(
+            title="Settings Reloaded",
+            description=(
+                f"All messages in {channel.mention} have been cleared.\n"
+                "The bot will resend stream messages on the next update."
+            ),
+            color=discord.Color.purple()
+        )
+        embed.set_footer(text="Sinon - Made by Puppetino")
+        await interaction.response.send_message(embed=embed)
+
+    except discord.Forbidden:
+        await interaction.response.send_message(
+            "I do not have permission to delete messages in the configured channel.",
+            ephemeral=True,
+        )
+    except discord.HTTPException as e:
+        await interaction.response.send_message(
+            f"An error occurred while clearing messages: {e}",
+            ephemeral=True,
+        )
 
 # Command to set the channel for updates
 @tree.command(name="set_channel", description="Set the channel for Twitch updates")
