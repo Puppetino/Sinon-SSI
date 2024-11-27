@@ -220,82 +220,69 @@ async def delete_old_messages():
 
 # Task to check Twitch API every minute
 @tasks.loop(minutes=1)
-async def check_streams():
-    global stream_messages, no_stream_message, max_viewers
-    
-    # Get the active streams from Twitch
-    streams = await get_twitch_streams()  # This should be your function that gets live streams
-    
-    # Ensure that each guild has a channel for Twitch updates
-    for guild in bot.guilds:
-        channel_id = channel_settings.get(str(guild.id))  # Get the stored channel for the guild
-        if channel_id is None:
-            continue  # Skip if no channel is set for the guild
-        
+async def check_twitch_streams():
+    global no_stream_message, stream_messages, max_viewers
+    streams_data = await get_twitch_streams()
+    current_streams = {stream["id"]: stream for stream in streams_data}
+
+    for guild_id, channel_id in channel_settings.items():
         channel = bot.get_channel(channel_id)
-        if not channel:
-            continue  # Skip if the channel doesn't exist
-        
-        # First, delete old "no stream" message if it exists
-        if str(guild.id) in no_stream_message:
-            await no_stream_message[str(guild.id)].delete()
-            del no_stream_message[str(guild.id)]
+        if channel is None:
+            continue
 
-        # Check if there are any active streams for the category (e.g., "BattleCore Arena")
-        active_streams = [stream for stream in streams if stream['game_name'] == CATEGORY_NAME]
-
-        # If there are no active streams, send a "no stream" message
-        if not active_streams:
-            # Send a new "no stream" message if not already sent
-            if str(guild.id) not in no_stream_message:
-                no_stream_message[str(guild.id)] = await channel.send(
-                    "Currently, no streams are live for the requested category."
-                )
-            continue  # Skip processing further streams for this guild
-
-        # Iterate through active streams and update messages
-        for stream in active_streams:
-            stream_id = stream['id']
-            title = stream['title']
-            viewer_count = stream['viewer_count']
-            user_name = stream['user_name']
-            stream_url = f"https://www.twitch.tv/{user_name}"
-
-            # If this stream already has a message, update it
-            if stream_id in stream_messages:
-                message = stream_messages[stream_id]
+        # Handle no live streams case
+        if not current_streams:
+            if guild_id not in no_stream_message:
                 embed = discord.Embed(
-                    title=title,
-                    description=f"Stream URL: {stream_url}",
-                    color=discord.Color.green()
+                    title="No live streams found", 
+                    description=f"There are no streams currently live in the {CATEGORY_NAME} category.",
+                    color=discord.Color.purple()
                 )
-                embed.add_field(name="Viewers", value=f"{viewer_count} viewers")
-                await message.edit(embed=embed)
-                
-                # Update max viewers tracking
-                max_viewers[stream_id] = max(max_viewers.get(stream_id, 0), viewer_count)
-                
+                embed.set_footer(text="Sinon - Made by Puppetino")
+                no_stream_message[guild_id] = await channel.send(embed=embed)
+            continue
+
+        # If there was a previous "no streams" message, delete it
+        if guild_id in no_stream_message:
+            await no_stream_message[guild_id].delete()
+            del no_stream_message[guild_id]
+
+        # Update streams and send embeds
+        for stream_id, stream in current_streams.items():
+            started_at = datetime.fromisoformat(stream["started_at"].replace("Z", "+00:00"))
+            duration = datetime.now(timezone.utc) - started_at
+            duration_str = f"{duration.seconds // 3600}h {duration.seconds % 3600 // 60}m"
+
+            viewer_count = stream["viewer_count"]
+            # Update or initialize max viewers
+            max_viewers[stream_id] = max(max_viewers.get(stream_id, 0), viewer_count)
+
+            # Create embed with max viewers and duration
+            embed = discord.Embed(
+                title=stream["title"],
+                url=f"https://www.twitch.tv/{stream['user_name']}",
+                description=f"{stream['user_name']} is streaming {CATEGORY_NAME}",
+                color=discord.Color.purple()
+            )
+            embed.add_field(name="Viewers", value=viewer_count)
+            embed.add_field(name="Max Viewers", value=max_viewers[stream_id])
+            embed.add_field(name="Duration", value=duration_str)
+            embed.set_thumbnail(url=stream["thumbnail_url"])
+            embed.set_footer(text="Sinon - Made by Puppetino")
+
+            # Send or update message
+            if stream_id not in stream_messages:
+                stream_messages[stream_id] = await channel.send(embed=embed)
             else:
-                # If it's a new stream, send a new message
-                embed = discord.Embed(
-                    title=title,
-                    description=f"Stream URL: {stream_url}",
-                    color=discord.Color.green()
-                )
-                embed.add_field(name="Viewers", value=f"{viewer_count} viewers")
-                stream_message = await channel.send(embed=embed)
-                
-                # Track this stream message
-                stream_messages[stream_id] = stream_message
-                max_viewers[stream_id] = viewer_count
+                await stream_messages[stream_id].edit(embed=embed)
 
-        # Cleanup old streams that are no longer live
-        active_stream_ids = {stream['id'] for stream in active_streams}
-        for stream_id in list(stream_messages.keys()):
-            if stream_id not in active_stream_ids:
-                # If the stream is no longer live, delete the old message
-                message = stream_messages.pop(stream_id)
-                await message.delete()
+    # Remove ended streams from messages
+    for stream_id in list(stream_messages):
+        if stream_id not in current_streams:
+            if stream_id in stream_messages:
+                await stream_messages[stream_id].delete()
+                del stream_messages[stream_id]
+            if stream_id in max_viewers:
                 del max_viewers[stream_id]
 
 # Command to set the channel for updates
