@@ -217,6 +217,15 @@ async def delete_old_messages():
             print(f"Missing permissions to delete messages in channel {channel.id}")
         except discord.HTTPException as e:
             print(f"Error deleting messages in channel {channel.id}: {e}")
+            
+# Function to reload channel settings dynamically
+def reload_channel_settings():
+    global channel_settings
+    try:
+        with open(channel_settings_file, "r") as file:
+            channel_settings = json.load(file)
+    except FileNotFoundError:
+        channel_settings = {}
 
 # Task to check Twitch API every minute
 @tasks.loop(minutes=1)
@@ -225,10 +234,17 @@ async def check_twitch_streams():
     streams_data = await get_twitch_streams()
     current_streams = {stream["id"]: stream for stream in streams_data}
 
+    # Reload channel settings dynamically
+    reload_channel_settings()
+
     for guild_id, channel_id in channel_settings.items():
         channel = bot.get_channel(channel_id)
         if channel is None:
             continue
+
+        # Ensure guild-specific message tracking exists
+        if guild_id not in stream_messages:
+            stream_messages[guild_id] = {}
 
         # Handle no live streams case
         if not current_streams:
@@ -271,19 +287,39 @@ async def check_twitch_streams():
             embed.set_footer(text="Sinon - Made by Puppetino")
 
             # Send or update message
-            if stream_id not in stream_messages:
-                stream_messages[stream_id] = await channel.send(embed=embed)
+            if stream_id not in stream_messages[guild_id]:
+                stream_messages[guild_id][stream_id] = await channel.send(embed=embed)
             else:
-                await stream_messages[stream_id].edit(embed=embed)
+                await stream_messages[guild_id][stream_id].edit(embed=embed)
 
     # Remove ended streams from messages
-    for stream_id in list(stream_messages):
-        if stream_id not in current_streams:
-            if stream_id in stream_messages:
-                await stream_messages[stream_id].delete()
-                del stream_messages[stream_id]
-            if stream_id in max_viewers:
-                del max_viewers[stream_id]
+    for guild_id, streams in list(stream_messages.items()):
+        for stream_id in list(streams):
+            if stream_id not in current_streams:
+                # Delete the message if it exists
+                if stream_id in stream_messages[guild_id]:
+                    await stream_messages[guild_id][stream_id].delete()
+                    del stream_messages[guild_id][stream_id]
+                if stream_id in max_viewers:
+                    del max_viewers[stream_id]
+
+# Command to reload settings             
+@tree.command(name="reload_settings", description="Reload channel settings and role permissions")
+async def reload_settings(interaction: discord.Interaction):
+    if not is_admin(interaction):
+        await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
+        return
+
+    reload_channel_settings()
+    save_channel_settings()
+    embed = discord.Embed(
+        title="Settings Reloaded",
+        description="Channel settings and role permissions have been reloaded.",
+        color=discord.Color.purple()
+    )
+    embed.set_footer(text="Sinon - Made by Puppetino")
+    await interaction.response.send_message(embed=embed)
+
 
 # Command to set the channel for updates
 @tree.command(name="set_channel", description="Set the channel for Twitch updates")
