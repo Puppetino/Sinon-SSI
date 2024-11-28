@@ -3,6 +3,7 @@ import discord
 import json
 import aiohttp
 import asyncio
+import traceback
 from discord.ext import tasks
 from discord import app_commands
 from dotenv import load_dotenv
@@ -41,6 +42,9 @@ max_viewers = {}
 # My Discord ID and ID's for others
 OWNER_ID = 487588371443613698
 authorized_users = [OWNER_ID] # User ID's for authorized users
+
+# Flag to track connection status
+is_disconnected = False
 
 # Load channel settings from a file
 try:
@@ -589,9 +593,31 @@ async def about(interaction: discord.Interaction):
     embed.set_footer(text="Sinon - Made by Puppetino")
     await interaction.response.send_message(embed=embed)
 
-# Event to run when the bot is ready
+# Event that runs when the bot is ready
 @bot.event
 async def on_ready():
+    global is_disconnected
+    
+    if is_disconnected:
+        is_disconnected = False
+        
+        # Log the reconnect event with timestamp
+        reconnect_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{reconnect_time}] Bot successfully reconnected to Discord.")
+        
+        try:
+            # Notify the owner about the successful reconnection
+            owner = await bot.fetch_user(OWNER_ID)
+            if owner:
+                embed = discord.Embed(title="Sinon is reconnected", color=discord.Color.purple())
+                embed.add_field(name=f"Bot successfully reconnected at {reconnect_time}", value=reconnect_time, inline=False)
+                embed.set_footer(text="Sinon - Made by Puppetino")
+                await owner.send(embed=embed)
+        except Exception:
+            # Log if the notification to the owner fails
+            traceback.print_exc()
+            print("Unable to notify the owner about the reconnection.")
+        
     if not check_twitch_streams.is_running():
         await tree.sync()
         await delete_old_messages()
@@ -599,6 +625,31 @@ async def on_ready():
         await get_game_id()
         check_twitch_streams.start()
         await bot.change_presence(activity=discord.CustomActivity(name="Stream Sniping on Twitch"))
+
+# Event that runs when the bot is disconnected
+@bot.event
+async def on_disconnect():
+    global is_disconnected
+    # Only send a message if this is the first disconnect event
+    if not is_disconnected:
+        is_disconnected = True
+
+        # Log the disconnect event with timestamp
+        disconnect_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{disconnect_time}] Bot disconnected from Discord.")
+
+        try:
+            # Send a message to the bot owner, if possible
+            owner = await bot.fetch_user(OWNER_ID)
+            if owner:
+                embed = discord.Embed(title="Sinon is disconnected", color=discord.Color.purple())
+                embed.add_field(name=f"Bot disconnected at {disconnect_time}", value=disconnect_time, inline=False)
+                embed.set_footer(text="Sinon - Made by Puppetino")
+                await owner.send(embed=embed)
+        except Exception:
+            # Log if the notification to the owner fails
+            traceback.print_exc()
+            print("Unable to notify the owner about the disconnection.")
 
 # Run the bot
 bot.run(DISCORD_TOKEN)
