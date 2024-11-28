@@ -43,8 +43,9 @@ max_viewers = {}
 OWNER_ID = 487588371443613698
 authorized_users = [OWNER_ID] # User ID's for authorized users
 
-# Flag to track connection status
+# Variables to track connection status and downtime
 is_disconnected = False
+disconnection_time = None
 
 # Load channel settings from a file
 try:
@@ -593,31 +594,46 @@ async def about(interaction: discord.Interaction):
     embed.set_footer(text="Sinon - Made by Puppetino")
     await interaction.response.send_message(embed=embed)
 
-# Event that runs when the bot is ready
+# Event that runs when the bot is ready (reconnected)
 @bot.event
 async def on_ready():
-    global is_disconnected
-    
+    global is_disconnected, disconnection_time
+
     if is_disconnected:
-        is_disconnected = False
-        
-        # Log the reconnect event with timestamp
-        reconnect_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"[{reconnect_time}] Bot successfully reconnected to Discord.")
-        
+        # Calculate downtime duration
+        reconnect_time = datetime.now()
+        reconnect_time_str = reconnect_time.strftime("%Y-%m-%d %H:%M:%S")
+        downtime = reconnect_time - disconnection_time
+        downtime_str = f"{downtime.seconds // 3600}h {downtime.seconds % 3600 // 60}m {downtime.seconds % 60}s"
+
+        # Log the reconnect event
+        print(f"[{reconnect_time_str}] Bot successfully reconnected to Discord.")
+
+        # Send a summary to the bot owner
         try:
-            # Notify the owner about the successful reconnection
             owner = await bot.fetch_user(OWNER_ID)
             if owner:
-                embed = discord.Embed(title="Sinon is reconnected", color=discord.Color.purple())
-                embed.add_field(name=f"Bot successfully reconnected at {reconnect_time}", value=reconnect_time, inline=False)
+                embed = discord.Embed(
+                    title="Connection Timeout Report",
+                    color=discord.Color.purple(),
+                    description=(
+                        "The bot experienced a connection timeout but has successfully reconnected."
+                    ),
+                )
+                embed.add_field(name="Disconnection Time", value=disconnection_time.strftime("%Y-%m-%d %H:%M:%S"), inline=False)
+                embed.add_field(name="Reconnection Time", value=reconnect_time_str, inline=False)
+                embed.add_field(name="Downtime Duration", value=downtime_str, inline=False)
                 embed.set_footer(text="Sinon - Made by Puppetino")
                 await owner.send(embed=embed)
         except Exception:
-            # Log if the notification to the owner fails
             traceback.print_exc()
             print("Unable to notify the owner about the reconnection.")
-        
+
+        # Reset the disconnection flag and time
+        is_disconnected = False
+        disconnection_time = None
+
+    # Regular startup tasks
     if not check_twitch_streams.is_running():
         await tree.sync()
         await delete_old_messages()
@@ -629,27 +645,16 @@ async def on_ready():
 # Event that runs when the bot is disconnected
 @bot.event
 async def on_disconnect():
-    global is_disconnected
-    # Only send a message if this is the first disconnect event
+    global is_disconnected, disconnection_time
+
+    # Only set the disconnection time and flag on the first disconnect
     if not is_disconnected:
         is_disconnected = True
+        disconnection_time = datetime.now()
 
-        # Log the disconnect event with timestamp
-        disconnect_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"[{disconnect_time}] Bot disconnected from Discord.")
-
-        try:
-            # Send a message to the bot owner, if possible
-            owner = await bot.fetch_user(OWNER_ID)
-            if owner:
-                embed = discord.Embed(title="Sinon is disconnected", color=discord.Color.purple())
-                embed.add_field(name=f"Bot disconnected at {disconnect_time}", value=disconnect_time, inline=False)
-                embed.set_footer(text="Sinon - Made by Puppetino")
-                await owner.send(embed=embed)
-        except Exception:
-            # Log if the notification to the owner fails
-            traceback.print_exc()
-            print("Unable to notify the owner about the disconnection.")
+        # Log the disconnect event
+        disconnect_time_str = disconnection_time.strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{disconnect_time_str}] Bot disconnected from Discord.")
 
 # Run the bot
 bot.run(DISCORD_TOKEN)
