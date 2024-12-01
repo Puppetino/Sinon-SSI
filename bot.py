@@ -49,16 +49,18 @@ authorized_users = [OWNER_ID]
 
 # List of developers
 developers = {
-    "syalen": {"url": "https://www.twitch.tv/syalen", "display_name": "Syalen"},                    # Syalen
-    "voctolm": {"url": "https://www.twitch.tv/voctolm", "display_name": "Voctolm"},                 # Voctolm/Reop
-    "dumbeldor": {"url": "https://www.twitch.tv/dumbeldor", "display_name": "Dumbeldor"},           # Dumbeldor
-    "enkeliix": {"url": "https://www.twitch.tv/enkeliix", "display_name": "Enkelix"},               # Enkelix
-    "lagger90": {"url": "https://www.twitch.tv/lagger90", "display_name": "Lagger90"},              # Lagger90
-    "krose_officiel": {"url": "https://www.twitch.tv/krose_officiel", "display_name": "Kross"},     # Kross
-    "hartsss": {"url": "https://www.twitch.tv/hartsss", "display_name": "Hartsss"},                 # HartRs
-    "rapickt2": {"url": "https://www.twitch.tv/rapickt2", "display_name": "CptMug (Rapickt2)"},     # CptMug/Rapickt2
-    "ohmygodie": {"url": "https://www.twitch.tv/ohmygodie", "display_name": "OhMyGodie"},           # OhMyGodie
-    "dilystv": {"url": "https://www.twitch.tv/dilystv", "display_name": "Dilys (Maëlle)"},          # Dilys/Mälle
+    "syalen": {"url": "https://www.twitch.tv/syalen", "display_name": "Syalen"},                                # Syalen
+    "voctolm": {"url": "https://www.twitch.tv/voctolm", "display_name": "Voctolm"},                             # Voctolm/Reop
+    "dumbeldor": {"url": "https://www.twitch.tv/dumbeldor", "display_name": "Dumbeldor"},                       # Dumbeldor
+    "enkeliix": {"url": "https://www.twitch.tv/enkeliix", "display_name": "Enkelix"},                           # Enkelix
+    "lagger90": {"url": "https://www.twitch.tv/lagger90", "display_name": "Lagger90"},                          # Lagger90
+    "krose_officiel": {"url": "https://www.twitch.tv/krose_officiel", "display_name": "Kross"},                 # Kross
+    "hartsss": {"url": "https://www.twitch.tv/hartsss", "display_name": "Hartsss"},                             # HartRs
+    "rapickt2": {"url": "https://www.twitch.tv/rapickt2", "display_name": "CptMug (Rapickt2)"},                 # CptMug/Rapickt2
+    "ohmygodie": {"url": "https://www.twitch.tv/ohmygodie", "display_name": "OhMyGodie"},                       # OhMyGodie
+    "dilystv": {"url": "https://www.twitch.tv/dilystv", "display_name": "Dilys (Maëlle)"},                      # Dilys/Mälle
+    "UbisoftBordeaux": {"url": "https://www.twitch.tv/ubisoftbordeaux", "display_name": "Ubisoft Bordeaux"},    # Ubisoft Bordeaux
+    "Ubisoft": {"url": "https://www.twitch.tv/ubisoft", "display_name": "Ubisoft"}                              # Ubisoft
 }
 
 # List of quotes for the dev reports
