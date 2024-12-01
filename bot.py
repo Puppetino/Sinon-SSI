@@ -253,6 +253,7 @@ async def check_twitch_streams():
 
         # Handle no live streams case
         if not current_streams:
+            await bot.change_presence(activity=discord.CustomActivity(name="Scouting for streams..."))
             if guild_id not in no_stream_message:
                 embed = discord.Embed(
                     title="No live streams found", 
@@ -262,6 +263,8 @@ async def check_twitch_streams():
                 embed.set_footer(text="Sinon - Made by Puppetino")
                 no_stream_message[guild_id] = await channel.send(embed=embed)
             continue
+        else:
+            await bot.change_presence(activity=discord.CustomActivity(name="Stream Sniping on Twitch"))
 
         # If there was a previous "no streams" message, delete it
         if guild_id in no_stream_message:
@@ -640,7 +643,6 @@ async def on_ready():
         print(f"Successfully logged in as {bot.user}")
         await get_game_id()
         check_twitch_streams.start()
-        await bot.change_presence(activity=discord.CustomActivity(name="Stream Sniping on Twitch"))
 
 # Event that runs when the bot is disconnected
 @bot.event
