@@ -4,6 +4,7 @@ import json
 import aiohttp
 import asyncio
 import traceback
+import random
 from discord.ext import tasks
 from discord import app_commands
 from dotenv import load_dotenv
@@ -27,25 +28,57 @@ TWITCH_CLIENT_ID = os.getenv('TWITCH_CLIENT_ID')
 TWITCH_CLIENT_SECRET = os.getenv('TWITCH_CLIENT_SECRET')
 CATEGORY_NAME = "BattleCore Arena"
 
-# Variables / Constants / Lists / JSONs
+# Bools / Ints & Floats / Lists / Strings
 twitch_access_token = None
 game_id = None
-channel_settings_file = "channel_settings.json"
-role_permissions_file = "role_permissions.json"
-stream_messages_per_guild = {}
+is_disconnected = False
+disconnection_time = None
 
-# Tracking messages and max viewers
+stream_messages_per_guild = {}
+stream_quotes = {}
 no_stream_message = {}
 stream_messages = {}
 max_viewers = {}
 
-# My Discord ID and ID's for others
-OWNER_ID = 487588371443613698
-authorized_users = [OWNER_ID] # User ID's for authorized users
+channel_settings_file = "channel_settings.json"
+role_permissions_file = "role_permissions.json"
 
-# Variables to track connection status and downtime
-is_disconnected = False
-disconnection_time = None
+# Owner ID and authorized user ID's
+OWNER_ID = 487588371443613698
+authorized_users = [OWNER_ID]
+
+# List of developers
+developers = {
+    "syalen": {"url": "https://www.twitch.tv/syalen", "display_name": "Syalen"},                    # Syalen
+    "voctolm": {"url": "https://www.twitch.tv/voctolm", "display_name": "Voctolm"},                 # Voctolm/Reop
+    "dumbeldor": {"url": "https://www.twitch.tv/dumbeldor", "display_name": "Dumbeldor"},           # Dumbeldor
+    "enkeliix": {"url": "https://www.twitch.tv/enkeliix", "display_name": "Enkelix"},               # Enkelix
+    "lagger90": {"url": "https://www.twitch.tv/lagger90", "display_name": "Lagger90"},              # Lagger90
+    "krose_officiel": {"url": "https://www.twitch.tv/krose_officiel", "display_name": "Kross"},     # Kross
+    "hartsss": {"url": "https://www.twitch.tv/hartsss", "display_name": "Hartsss"},                 # HartRs
+    "rapickt2": {"url": "https://www.twitch.tv/rapickt2", "display_name": "CptMug (Rapickt2)"},     # CptMug/Rapickt2
+    "ohmygodie": {"url": "https://www.twitch.tv/ohmygodie", "display_name": "OhMyGodie"},           # OhMyGodie
+    "dilystv": {"url": "https://www.twitch.tv/dilystv", "display_name": "Dilys (Maëlle)"},          # Dilys/Mälle
+}
+
+# List of quotes for the dev reports
+dev_quotes = [
+    "Give them hell!", 
+    "War. war never changes!",
+    "They are rage, brutal, without mercy. But you. You will be worse. Rip and tear, until it is **done**.",
+    "The only thing they fear is you!",
+    "HOLD MY BEER, I GOT THIS!",
+    "No retreat. No surrender!",
+    "The right man in the wrong place can make all the difference in the world.",
+    "The harder the battle, the sweeter the victory!",
+    "This is where the fun begins!",
+    "To be the best, you’ve got to beat the best.",
+    "To be the best, you’ve got to beat the rest.",
+    "I don't play games. I win them!",
+    "Strike swiftly, and without hesitation!",
+    "The enemy may be strong, but your will to win is stronger.",
+    "Strike first, strike hard, no mercy."
+]
 
 # Load channel settings from a file
 try:
@@ -235,7 +268,7 @@ def reload_channel_settings():
 # Task to check Twitch API every minute
 @tasks.loop(minutes=1)
 async def check_twitch_streams():
-    global no_stream_message, stream_messages, max_viewers
+    global no_stream_message, stream_messages, max_viewers, stream_quotes
     streams_data = await get_twitch_streams()
     current_streams = {stream["id"]: stream for stream in streams_data}
 
@@ -273,26 +306,52 @@ async def check_twitch_streams():
 
         # Update streams and send embeds
         for stream_id, stream in current_streams.items():
+            user_name = stream["user_name"].lower()
             started_at = datetime.fromisoformat(stream["started_at"].replace("Z", "+00:00"))
             duration = datetime.now(timezone.utc) - started_at
             duration_str = f"{duration.seconds // 3600}h {duration.seconds % 3600 // 60}m"
 
             viewer_count = stream["viewer_count"]
-            # Update or initialize max viewers
             max_viewers[stream_id] = max(max_viewers.get(stream_id, 0), viewer_count)
 
-            # Create embed with max viewers and duration
-            embed = discord.Embed(
-                title=stream["title"],
-                url=f"https://www.twitch.tv/{stream['user_name']}",
-                description=f"{stream['user_name']} is streaming {CATEGORY_NAME}",
-                color=discord.Color.purple()
-            )
-            embed.add_field(name="Viewers", value=viewer_count)
-            embed.add_field(name="Max Viewers", value=max_viewers[stream_id])
-            embed.add_field(name="Duration", value=duration_str)
-            embed.set_thumbnail(url=stream["thumbnail_url"])
-            embed.set_footer(text="Sinon - Made by Puppetino")
+            # Check if the streamer is a developer
+            if user_name in developers:
+                dev_info = developers[user_name]
+
+                # Assign a random quote to the stream if it doesn't already have one
+                if stream_id not in stream_quotes:
+                    stream_quotes[stream_id] = random.choice(dev_quotes)
+                quote = stream_quotes[stream_id]
+
+                # Create a special embed for developer streams
+                embed = discord.Embed(
+                    title=f"{dev_info['display_name']} is live!",
+                    url=dev_info["url"],
+                    description=(
+                        f"One of the developers of {CATEGORY_NAME} is live!\n\n"
+                        f"**{quote}**\n\n"
+                        f"**Title**: {stream['title']}"
+                    ),
+                    color=discord.Color.gold()
+                )
+                embed.add_field(name="Viewers", value=viewer_count, inline=True)
+                embed.add_field(name="Max Viewers", value=max_viewers[stream_id], inline=True)
+                embed.add_field(name="Duration", value=duration_str, inline=True)
+                embed.set_thumbnail(url=stream["thumbnail_url"])
+                embed.set_footer(text="Sinon - Made by Puppetino")
+            else:
+                # Regular embed for other streamers
+                embed = discord.Embed(
+                    title=stream["title"],
+                    url=f"https://www.twitch.tv/{stream['user_name']}",
+                    description=f"{stream['user_name']} is streaming {CATEGORY_NAME}",
+                    color=discord.Color.purple()
+                )
+                embed.add_field(name="Viewers", value=viewer_count)
+                embed.add_field(name="Max Viewers", value=max_viewers[stream_id])
+                embed.add_field(name="Duration", value=duration_str)
+                embed.set_thumbnail(url=stream["thumbnail_url"])
+                embed.set_footer(text="Sinon - Made by Puppetino")
 
             # Send or update message
             if stream_id not in stream_messages[guild_id]:
@@ -300,7 +359,7 @@ async def check_twitch_streams():
             else:
                 await stream_messages[guild_id][stream_id].edit(embed=embed)
 
-    # Remove ended streams from messages
+    # Remove ended streams from messages and quotes
     for guild_id, streams in list(stream_messages.items()):
         for stream_id in list(streams):
             if stream_id not in current_streams:
@@ -308,8 +367,11 @@ async def check_twitch_streams():
                 if stream_id in stream_messages[guild_id]:
                     await stream_messages[guild_id][stream_id].delete()
                     del stream_messages[guild_id][stream_id]
+                # Remove from max viewers and quotes
                 if stream_id in max_viewers:
                     del max_viewers[stream_id]
+                if stream_id in stream_quotes:
+                    del stream_quotes[stream_id]
 
 # Command to reload channel settings
 @tree.command(name="reload_settings", description="Reload channel settings, clear messages, and prepare for a fresh start.")
