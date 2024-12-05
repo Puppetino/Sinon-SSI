@@ -5,6 +5,7 @@ import aiohttp
 import asyncio
 import traceback
 import random
+from pathlib import Path
 from discord.ext import tasks
 from discord import app_commands
 from dotenv import load_dotenv
@@ -40,12 +41,15 @@ no_stream_message = {}
 stream_messages = {}
 max_viewers = {}
 
-channel_settings_file = "channel_settings.json"
-role_permissions_file = "role_permissions.json"
-
 # Owner ID and authorized user ID's
 OWNER_ID = 487588371443613698
 authorized_users = [OWNER_ID]
+
+# Data paths for JSON files
+DATE_DIR = Path("data")
+channel_settings_file = DATE_DIR / "channel_settings.json"
+role_permissions_file = DATE_DIR / "role_permissions.json"
+targets = DATE_DIR / "targets.json"
 
 # List of developers
 developers = {
@@ -98,15 +102,15 @@ except FileNotFoundError:
 # Load targets from a JSON file
 def load_targets():
     try:
-        with open("targets.json", "r") as file:
+        with open(targets, "r") as file:
             data = json.load(file)
-            return data.get("active_targets", []), data.get("past_targets", [])
+            return data.get(targets, []), data.get("past_targets", [])
     except FileNotFoundError:
         return [], []
 
 # Save targets to a JSON file
 def save_targets():
-    with open("targets.json", "w") as file:
+    with open(targets, "w") as file:
         json.dump({"active_targets": active_targets, "past_targets": past_targets}, file, indent=4)
         
 # Load the initial target lists

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+    <script src="../static/js/script.js"></script>
+</head>
+<body>
+
+    <button id="theme-toggle">Toggle Light/Dark Mode</button>
+    <h1>Bot Statistics</h1>
+
+    <div class="section">
+        <h2 onclick="toggleContent(this)">Channel Settings</h2>
+        <div class="content">
+            <pre>{{ channel_settings | tojson(indent=2) }}</pre>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 onclick="toggleContent(this)">Role Permissions</h2>
+        <div class="content">
+            <pre>{{ role_permissions | tojson(indent=2) }}</pre>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 onclick="toggleContent(this)">Targets</h2>
+        <div class="content">
+            <pre>{{ targets | tojson(indent=2) }}</pre>
+        </div>
+    </div>
+
+    <script>
+        // Function to toggle visibility of content sections
+        function toggleContent(element) {
+            const content = element.nextElementSibling;
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
+            }
+        }
+
+        // Theme toggle functionality
+        const toggleButton = document.getElementById('theme-toggle');
+        toggleButton.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            if (document.body.classList.contains('light-mode')) {
+                toggleButton.textContent = 'Toggle Dark Mode';
+            } else {
+                toggleButton.textContent = 'Toggle Light Mode';
+            }
+        });
+    </script>
+</body>
+</html>
