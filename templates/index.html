@@ -10,6 +10,22 @@
     <button id="theme-toggle">Toggle Light/Dark Mode</button>
     <h1>Sinon Dashboard</h1>
 
+    <!-- Bot Control -->
+    <div class="section">
+        <h2 onclick="toggleContent(this)">Control Bot</h2>
+        <div class="content">
+            <form id="auth-form">
+                <input type="password" name="password" placeholder="Enter admin password" required>
+                <button type="submit">Authenticate</button>
+            </form>
+            <div id="control-buttons" style="display: none;">
+                <button type="button" data-action="start">Start Bot</button>
+                <button type="button" data-action="restart">Restart Bot</button>
+                <button type="button" data-action="shutdown">Shutdown Bot</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Stats Section -->
     <div class="section">
         <h2 onclick="toggleContent(this)">Bot Stats</h2>
@@ -118,6 +134,25 @@
                     </tr>
                     {% endfor %}
                 </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Detailed Stream Stats -->
+    <div class="section">
+        <h2 onclick="toggleContent(this)">Detailed Stream Stats</h2>
+        <div class="content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Streamer Name</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Peak Viewers</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody id="detailed-streams"></tbody>
             </table>
         </div>
     </div>

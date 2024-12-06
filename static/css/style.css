@@ -7,6 +7,45 @@ body {
     padding: 20px;
 }
 
+/* Light Mode */
+body.light-mode {
+    background-color: #f4f4f4;
+    color: #121212;
+}
+
+body.light-mode .section {
+    background-color: #ffffff;
+    color: #121212;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode h1 {
+    color: #6200ea;
+}
+
+body.light-mode h2 {
+    color: #6200ea;
+}
+
+body.light-mode h3 {
+    color: #6200ea;
+}
+
+body.light-mode table {
+    background-color: #ffffff;
+    color: #121212;
+}
+
+body.light-mode thead {
+    background-color: #bb86fc;
+    color: #ffffff;
+}
+
+body.light-mode #theme-toggle {
+    background-color: #6200ea;
+    color: #ffffff;
+}
+
 /* Headings */
 h1 {
     color: #bb86fc; /* Purple for main heading */
@@ -20,6 +59,10 @@ h2 {
     margin: 10px 0;
 }
 
+.section h3 {
+    color: #bb86fc; /* Purple for subsection headings */
+}
+
 /* Section Styling */
 .section {
     margin-bottom: 20px;
@@ -29,13 +72,15 @@ h2 {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
-.section h3 {
-    color: #bb86fc; /* Purple for subsection headings */
+.section:hover {
+    box-shadow: 0 0 15px 5px #bb86fc; /* Purple glow */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* Content */
+/* Default display for content sections */
 .content {
-    display: none; /* Collapsible content (hidden by default) */
+    display: block; /* Keep sections open on page load */
     margin-top: 10px;
 }
 
@@ -75,35 +120,38 @@ tr:last-child td {
     padding: 10px 20px;
     cursor: pointer;
     border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-/* Light Mode */
-body.light-mode {
-    background-color: #f4f4f4;
-    color: #121212;
+#theme-toggle:hover {
+    background-color: #bb86fc; /* Purple hover */
+    transform: scale(1.05); /* Slightly grow on hover */
 }
 
-body.light-mode .section {
-    background-color: #ffffff;
-    color: #121212;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+/* Form Inputs */
+input[type="password"] {
+    width: 300px;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #6200ea;
+    border-radius: 5px;
+    background-color: #333;
+    color: #f5f5f5;
 }
 
-body.light-mode h2 {
-    color: #6200ea;
+/* Buttons */
+button {
+    background-color: #e91e63;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    margin-right: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-body.light-mode table {
-    background-color: #ffffff;
-    color: #121212;
-}
-
-body.light-mode thead {
+button:hover {
     background-color: #bb86fc;
-    color: #ffffff;
-}
-
-body.light-mode #theme-toggle {
-    background-color: #6200ea;
-    color: #ffffff;
+    transform: scale(1.05); /* Slightly grow on hover */
 }

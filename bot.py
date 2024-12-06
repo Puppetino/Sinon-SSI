@@ -40,6 +40,7 @@ stream_quotes = {}
 no_stream_message = {}
 stream_messages = {}
 max_viewers = {}
+detailed_streams = {}
 
 # Owner ID and authorized user ID's
 OWNER_ID = 487588371443613698
@@ -322,6 +323,9 @@ async def check_twitch_streams():
     update_stat("active_streams", len(current_streams))  # Current number of active streams
     update_stat("guilds_tracked", len(channel_settings))  # Guilds being tracked
 
+    # Track detailed streams stats
+    detailed_streams = stats.get("detailed_streams", {})
+
     for guild_id, channel_id in channel_settings.items():
         channel = bot.get_channel(channel_id)
         if channel is None:
@@ -360,6 +364,21 @@ async def check_twitch_streams():
 
             viewer_count = stream["viewer_count"]
             max_viewers[stream_id] = max(max_viewers.get(stream_id, 0), viewer_count)
+
+            # Track stream details
+            if stream_id not in detailed_streams:
+                detailed_streams[stream_id] = {
+                    "streamer_name": user_name,
+                    "start_time": started_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    "end_time": None,
+                    "peak_viewers": viewer_count,
+                    "duration": duration_str
+                }
+            else:
+                detailed_streams[stream_id]["peak_viewers"] = max(
+                    detailed_streams[stream_id]["peak_viewers"], viewer_count
+                )
+                detailed_streams[stream_id]["duration"] = duration_str
 
             # Check if the streamer is a developer
             if user_name in developers:
@@ -407,7 +426,7 @@ async def check_twitch_streams():
             else:
                 await stream_messages[guild_id][stream_id].edit(embed=embed)
 
-    # Remove ended streams from messages and quotes
+    # Remove ended streams from messages and detailed streams
     for guild_id, streams in list(stream_messages.items()):
         for stream_id in list(streams):
             if stream_id not in current_streams:
@@ -415,13 +434,12 @@ async def check_twitch_streams():
                 if stream_id in stream_messages[guild_id]:
                     await stream_messages[guild_id][stream_id].delete()
                     del stream_messages[guild_id][stream_id]
-                # Remove from max viewers and quotes
-                if stream_id in max_viewers:
-                    del max_viewers[stream_id]
-                if stream_id in stream_quotes:
-                    del stream_quotes[stream_id]
+                # Mark stream as ended in detailed streams
+                if stream_id in detailed_streams:
+                    detailed_streams[stream_id]["end_time"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
-    # Save final stats at the end of the task
+    # Save detailed streams to stats
+    stats["detailed_streams"] = detailed_streams
     save_stats()
 
 # Command to reload channel settings
