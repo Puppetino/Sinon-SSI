@@ -5,7 +5,7 @@ import os
 app = Flask(__name__)
 
 # Define the path to your Data folder
-DATA_FOLDER = os.path.join(os.path.dirname(__file__), 'Data')
+DATA_FOLDER = os.path.join(os.path.dirname(__file__), 'data')
 
 # Load data from JSON files
 def load_json(file_name):
