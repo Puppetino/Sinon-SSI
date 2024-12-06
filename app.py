@@ -21,11 +21,22 @@ def home():
     channel_settings = load_json('channel_settings.json')
     role_permissions = load_json('role_permission.json')
     targets = load_json('targets.json')
-    
-    return render_template('index.html', 
-                           channel_settings=channel_settings, 
-                           role_permissions=role_permissions, 
-                           targets=targets)
+
+    # Load stats from stats.json
+    stats_file = os.path.join(DATA_FOLDER, 'stats.json')
+    if os.path.exists(stats_file):
+        with open(stats_file, 'r') as file:
+            stats = json.load(file)
+    else:
+        stats = {}  # Default empty stats if the file doesn't exist
+
+    return render_template(
+        'index.html',
+        channel_settings=channel_settings,
+        role_permissions=role_permissions,
+        targets=targets,
+        stats=stats  # Pass stats to the template
+    )
 
 # API route to fetch data (optional for AJAX requests)
 @app.route('/api/stats')
@@ -35,6 +46,15 @@ def api_stats():
         "role_permissions": load_json('role_permission.json'),
         "targets": load_json('targets.json')
     }
+
+    # Load stats.json and include in the response
+    stats_file = os.path.join(DATA_FOLDER, "stats.json")
+    if os.path.exists(stats_file):
+        with open(stats_file, 'r') as file:
+            data["stats"] = json.load(file)
+    else:
+        data["stats"] = {}
+
     return jsonify(data)
 
 if __name__ == '__main__':

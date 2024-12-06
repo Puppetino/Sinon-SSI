@@ -50,6 +50,15 @@ DATE_DIR = Path("data")
 channel_settings_file = DATE_DIR / "channel_settings.json"
 role_permissions_file = DATE_DIR / "role_permissions.json"
 targets = DATE_DIR / "targets.json"
+stats_file = DATE_DIR / "stats.json"
+
+# Initialize stats dictionary
+stats = {
+    "streams_checked": 0,
+    "messages_sent": 0,
+    "active_streams": 0,
+    "guilds_tracked": 0,
+}
 
 # List of developers
 developers = {
@@ -85,6 +94,33 @@ dev_quotes = [
     "The enemy may be strong, but your will to win is stronger.",
     "Strike first, strike hard, no mercy."
 ]
+
+# Function to load stats from stats.json
+def load_stats():
+    global stats
+    if stats_file.exists():
+        with open(stats_file, "r") as file:
+            stats = json.load(file)
+    else:
+        save_stats()
+
+# Function to save stats to stats.json
+def save_stats():
+    global stats
+    if not stats:
+        stats = {
+            "streams_checked": 0,
+            "messages_sent": 0,
+            "active_streams": 0,
+            "guilds_tracked": 0,
+        }
+    with open(stats_file, "w") as file:
+        json.dump(stats, file, indent=4)
+
+# Function to update a stat
+def update_stat(key, value):
+    stats[key] = value
+    save_stats()
 
 # Load channel settings from a file
 try:
@@ -281,6 +317,11 @@ async def check_twitch_streams():
     # Reload channel settings dynamically
     reload_channel_settings()
 
+    # Update stats
+    update_stat("streams_checked", stats["streams_checked"] + 1)  # Increment streams checked
+    update_stat("active_streams", len(current_streams))  # Current number of active streams
+    update_stat("guilds_tracked", len(channel_settings))  # Guilds being tracked
+
     for guild_id, channel_id in channel_settings.items():
         channel = bot.get_channel(channel_id)
         if channel is None:
@@ -362,6 +403,7 @@ async def check_twitch_streams():
             # Send or update message
             if stream_id not in stream_messages[guild_id]:
                 stream_messages[guild_id][stream_id] = await channel.send(embed=embed)
+                update_stat("messages_sent", stats["messages_sent"] + 1)  # Increment messages sent
             else:
                 await stream_messages[guild_id][stream_id].edit(embed=embed)
 
@@ -378,6 +420,9 @@ async def check_twitch_streams():
                     del max_viewers[stream_id]
                 if stream_id in stream_quotes:
                     del stream_quotes[stream_id]
+
+    # Save final stats at the end of the task
+    save_stats()
 
 # Command to reload channel settings
 @tree.command(name="reload_settings", description="Reload channel settings, clear messages, and prepare for a fresh start.")
@@ -670,6 +715,8 @@ async def about(interaction: discord.Interaction):
 async def on_ready():
     global is_disconnected, disconnection_time
 
+    load_stats()
+    
     if is_disconnected:
         # Calculate downtime duration
         reconnect_time = datetime.now()
