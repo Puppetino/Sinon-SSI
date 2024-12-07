@@ -67,6 +67,8 @@ function fetchDetailedStreams() {
 // Authenticate the user
 function authenticate() {
     const password = document.querySelector("input[name='password']").value;
+    const authButton = document.querySelector("#auth-form button");
+    authButton.disabled = true; // Disable button to prevent duplicate submissions
 
     fetch('/api/auth', {
         method: 'POST',
@@ -75,16 +77,19 @@ function authenticate() {
     })
         .then(response => response.json())
         .then(data => {
+            console.log('Authentication response:', data);
             if (data.message) {
                 alert(data.message);
-                document.getElementById('auth-form').style.display = 'none'; // Hide the auth form
-                const buttonsContainer = document.getElementById('control-buttons');
-                buttonsContainer.classList.remove('hidden'); // Show control buttons
+                document.getElementById('auth-form').classList.add('hidden');
+                document.getElementById('control-buttons').classList.remove('hidden');
             } else {
                 alert(data.error);
             }
         })
-        .catch(error => console.error('Authentication error:', error));
+        .catch(error => console.error('Authentication error:', error))
+        .finally(() => {
+            authButton.disabled = false; // Re-enable the button
+        });
 }
 
 // Fetch and update bot status
