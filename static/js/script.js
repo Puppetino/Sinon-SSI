@@ -17,67 +17,45 @@ function controlBot(action) {
 // Fetch detailed streams
 function fetchDetailedStreams() {
     fetch('/api/detailed_streams')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Failed to fetch streams. Status: ${response.status}`);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Fetched Streams:', data); // Debug log
             const container = document.getElementById('streams-container');
             container.innerHTML = ''; // Clear existing cards
 
             Object.values(data).forEach(stream => {
-                // Create the stream card
                 const card = document.createElement('div');
                 card.className = 'stream-card';
 
-                // Thumbnail
                 const thumbnail = document.createElement('img');
-                thumbnail.src = stream.thumbnail_url || 'default-thumbnail.png'; // Default thumbnail if none exists
+                thumbnail.src = stream.thumbnail_url || 'default-thumbnail.png';
                 card.appendChild(thumbnail);
 
-                // Stream content container
                 const content = document.createElement('div');
                 content.className = 'stream-card-content';
 
-                // Title
                 const title = document.createElement('h3');
                 title.textContent = stream.title || 'Untitled Stream';
                 content.appendChild(title);
 
-                // Streamer name
                 const streamer = document.createElement('p');
                 streamer.textContent = `Streamer: ${stream.streamer_name}`;
                 content.appendChild(streamer);
 
-                // Max viewer count
                 const maxViewers = document.createElement('p');
                 maxViewers.textContent = `Max Viewers: ${stream.peak_viewers || 'N/A'}`;
                 content.appendChild(maxViewers);
 
-                // Start time
                 const startTime = document.createElement('p');
                 startTime.textContent = `Start Time: ${stream.start_time || 'Unknown'}`;
                 content.appendChild(startTime);
 
-                // End time (or "Ongoing")
                 const endTime = document.createElement('p');
                 endTime.textContent = `End Time: ${stream.end_time || 'Ongoing'}`;
                 content.appendChild(endTime);
 
-                // Duration
                 const duration = document.createElement('p');
                 duration.textContent = `Duration: ${stream.duration || 'N/A'}`;
                 content.appendChild(duration);
-
-                // Watch link
-                const link = document.createElement('a');
-                link.href = `https://www.twitch.tv/${stream.streamer_name}`;
-                link.target = '_blank';
-                link.textContent = 'Watch Stream';
-                content.appendChild(link);
 
                 card.appendChild(content);
                 container.appendChild(card);

@@ -240,7 +240,7 @@ async def get_twitch_streams():
         async with session.get(url, headers=headers) as response:
             if response.status == 200:
                 data = await response.json()
-                return data.get("data", [])
+                return data.get("data", [])  # Ensure you capture all stream data
             else:
                 print(f"Error: {response.status}")
                 return []
@@ -369,10 +369,12 @@ async def check_twitch_streams():
             if stream_id not in detailed_streams:
                 detailed_streams[stream_id] = {
                     "streamer_name": user_name,
+                    "title": stream["title"],  # Include title from Twitch API
                     "start_time": started_at.strftime("%Y-%m-%d %H:%M:%S"),
                     "end_time": None,
                     "peak_viewers": viewer_count,
-                    "duration": duration_str
+                    "duration": duration_str,
+                    "thumbnail_url": stream["thumbnail_url"].replace("{width}", "320").replace("{height}", "180")  # Process thumbnail URL
                 }
             else:
                 detailed_streams[stream_id]["peak_viewers"] = max(
@@ -403,7 +405,7 @@ async def check_twitch_streams():
                 embed.add_field(name="Viewers", value=viewer_count, inline=True)
                 embed.add_field(name="Max Viewers", value=max_viewers[stream_id], inline=True)
                 embed.add_field(name="Duration", value=duration_str, inline=True)
-                embed.set_thumbnail(url=stream["thumbnail_url"])
+                embed.set_thumbnail(url=detailed_streams[stream_id]["thumbnail_url"])  # Use processed thumbnail URL
                 embed.set_footer(text="Sinon - Made by Puppetino")
             else:
                 # Regular embed for other streamers
@@ -416,7 +418,7 @@ async def check_twitch_streams():
                 embed.add_field(name="Viewers", value=viewer_count)
                 embed.add_field(name="Max Viewers", value=max_viewers[stream_id])
                 embed.add_field(name="Duration", value=duration_str)
-                embed.set_thumbnail(url=stream["thumbnail_url"])
+                embed.set_thumbnail(url=detailed_streams[stream_id]["thumbnail_url"])  # Use processed thumbnail URL
                 embed.set_footer(text="Sinon - Made by Puppetino")
 
             # Send or update message
