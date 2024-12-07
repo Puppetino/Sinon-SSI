@@ -7,6 +7,10 @@ body {
     padding: 20px;
 }
 
+.hidden {
+    display: none !important; /* Completely hide */
+}
+
 /* Light Mode */
 body.light-mode {
     background-color: #f4f4f4;
@@ -55,7 +59,6 @@ h1 {
 
 h2 {
     color: #e91e63; /* Red for section headings */
-    cursor: pointer;
     margin: 10px 0;
 }
 
@@ -75,6 +78,7 @@ h2 {
 .section:hover {
     box-shadow: 0 0 15px 5px #bb86fc; /* Purple glow */
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
 }
 
 /* Content */
@@ -154,4 +158,128 @@ button {
 button:hover {
     background-color: #bb86fc;
     transform: scale(1.05); /* Slightly grow on hover */
+}
+
+/* Stream Card Styling */
+.stream-card {
+    background-color: #1e1e1e;
+    color: #f5f5f5;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: row;
+}
+
+.stream-card img {
+    border-radius: 8px;
+    width: 150px;
+    height: auto;
+    margin-right: 15px;
+}
+
+.stream-card-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.stream-card-content h3 {
+    margin: 0;
+    color: #bb86fc; /* Purple for stream title */
+}
+
+.stream-card-content p {
+    margin: 5px 0;
+    color: #b0b0b0; /* Light gray for additional info */
+}
+
+.stream-card-content a {
+    color: #e91e63; /* Red for links */
+    text-decoration: none;
+}
+
+.stream-card-content a:hover {
+    text-decoration: underline;
+}
+
+/* Control Bot Container */
+.control-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px; /* Spacing between form and buttons */
+}
+
+/* Center Align Form */
+.control-container form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px; /* Spacing between input and button */
+}
+
+/* Control Buttons */
+.control-buttons {
+    display: flex;
+    gap: 15px; /* Space between buttons */
+}
+
+/* Input Field */
+.control-container input[type="password"] {
+    width: 300px;
+    padding: 10px;
+    border: 1px solid #6200ea;
+    border-radius: 5px;
+    background-color: #333;
+    color: #f5f5f5;
+    text-align: center;
+}
+
+/* Control Buttons Styling (inherits from existing button styles) */
+.control-buttons button {
+    margin: 0; /* Removes default margin between buttons */
+}
+
+/* Adjust Content Alignment in Control Section */
+.section .content.control-container {
+    align-items: center;
+}
+
+/* Bot Status Indicator */
+.bot-status {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+#status-indicator {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: #f44336; /* Red for Offline */
+    transition: background-color 0.3s ease;
+}
+
+.bot-status span {
+    font-weight: bold;
+    color: #f5f5f5;
+}
+
+/* Status Colors */
+.bot-online #status-indicator {
+    background-color: #4caf50; /* Green for Online */
+}
+
+.bot-starting #status-indicator {
+    background-color: #03a9f4; /* Blue for Starting */
+}
+
+.bot-restarting #status-indicator {
+    background-color: #ff9800; /* Orange for Restarting */
+}
+
+.bot-shutting-down #status-indicator {
+    background-color: #9c27b0; /* Purple for Shutting Down */
 }

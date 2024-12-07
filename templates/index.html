@@ -12,13 +12,17 @@
 
     <!-- Bot Control -->
     <div class="section">
-        <h2 onclick="toggleContent(this)">Control Bot</h2>
-        <div class="content">
+        <h2>Control Bot</h2>
+        <div class="content control-container">
+            <div class="bot-status">
+                <span id="status-indicator"></span>
+                <span id="status-text">Offline</span>
+            </div>
             <form id="auth-form">
                 <input type="password" name="password" placeholder="Enter admin password" required>
                 <button type="submit">Authenticate</button>
             </form>
-            <div id="control-buttons" style="display: none;">
+            <div id="control-buttons" class="control-buttons hidden">
                 <button type="button" data-action="start">Start Bot</button>
                 <button type="button" data-action="restart">Restart Bot</button>
                 <button type="button" data-action="shutdown">Shutdown Bot</button>
@@ -28,7 +32,7 @@
 
     <!-- Stats Section -->
     <div class="section">
-        <h2 onclick="toggleContent(this)">Bot Stats</h2>
+        <h2>Bot Stats</h2>
         <div class="content">
             <table>
                 <thead>
@@ -39,19 +43,21 @@
                 </thead>
                 <tbody>
                     {% for key, value in stats.items() %}
+                    {% if key != "detailed_streams" %}
                     <tr>
                         <td>{{ key | capitalize }}</td>
                         <td>{{ value }}</td>
                     </tr>
+                    {% endif %}
                     {% endfor %}
-                </tbody>
+                </tbody>                
             </table>
         </div>
     </div>
 
     <!-- Channel Settings Section -->
     <div class="section">
-        <h2 onclick="toggleContent(this)">Channel Settings</h2>
+        <h2>Channel Settings</h2>
         <div class="content">
             <table>
                 <thead>
@@ -74,7 +80,7 @@
 
     <!-- Role Permissions Section -->
     <div class="section">
-        <h2 onclick="toggleContent(this)">Role Permissions</h2>
+        <h2>Role Permissions</h2>
         <div class="content">
             <table>
                 <thead>
@@ -97,7 +103,7 @@
 
     <!-- Targets Section -->
     <div class="section">
-        <h2 onclick="toggleContent(this)">Targets</h2>
+        <h2>Targets</h2>
         <div class="content">
             <h3>Active Targets</h3>
             <table>
@@ -138,24 +144,12 @@
         </div>
     </div>
 
-    <!-- Detailed Stream Stats -->
     <div class="section">
-        <h2 onclick="toggleContent(this)">Detailed Stream Stats</h2>
-        <div class="content">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Streamer Name</th>
-                        <th>Start Time</th>
-                        <th>End Time</th>
-                        <th>Peak Viewers</th>
-                        <th>Duration</th>
-                    </tr>
-                </thead>
-                <tbody id="detailed-streams"></tbody>
-            </table>
+        <h2>Detected Streams</h2>
+        <div id="streams-container" class="content">
+            <!-- Stream cards will be dynamically inserted here -->
         </div>
-    </div>
+    </div>    
 
     <script src="../static/js/script.js"></script>
 </body>

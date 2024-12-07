@@ -1,5 +1,6 @@
 from flask import Flask, render_template, jsonify, request, session
 from dotenv import load_dotenv
+import platform
 import subprocess
 import json
 import os
@@ -16,8 +17,9 @@ CORS(app, supports_credentials=True)
 DATA_FOLDER = os.path.join(os.path.dirname(__file__), 'data')   # Define the path to your Data folder
 BOT_SCRIPT = os.path.join(os.path.dirname(__file__), 'bot.py')  # Path to the bot script
 
-# Track the bot process
+# Track the bot process and status
 bot_process = None
+bot_status = "offline"
 
 # Authentication
 @app.route('/api/auth', methods=['POST'])
@@ -86,60 +88,82 @@ def detailed_streams():
     if os.path.exists(stats_file):
         with open(stats_file, 'r') as file:
             stats = json.load(file)
-            return jsonify(stats.get("detailed_streams", {}))
+            detailed_streams = stats.get("detailed_streams", {})
+            # Add additional processing if necessary
+            return jsonify(detailed_streams)
     return jsonify({})
 
-#@app.route('/api/control', methods=['POST'])
+@app.route('/api/status', methods=['GET'])
+def bot_status_endpoint():
+    return jsonify({"status": bot_status})
+
 @app.route('/api/control', methods=['POST'])
 def control_bot():
-    if not session.get('authenticated'):
-        return jsonify({"error": "Unauthorized"}), 403
-    global bot_process
-    action = request.form.get('action')
-    password = request.form.get('password')
+    global bot_process, bot_status
 
-    # Password protection
-    if password != os.getenv('ADMIN_PASSWORD', 'default_password'):
-        return jsonify({"error": "Unauthorized"}), 403
+    action = request.form.get('action')
+    os_type = platform.system()  # Determine the OS (Windows, Linux, etc.)
+    bot_status = "offline" if not bot_process or bot_process.poll() is not None else bot_status
 
     if action == "start":
-        if bot_process and bot_process.poll() is None:
+        if bot_status == "online":
             return jsonify({"message": "Bot is already running."}), 400
 
-        # Start the bot in a detached process
-        if os.name == "nt":  # Windows
-            bot_process = subprocess.Popen(
-                ["python", BOT_SCRIPT],
-                creationflags=subprocess.CREATE_NEW_CONSOLE,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        else:  # Linux/Unix
-            bot_process = subprocess.Popen(
-                ["python3", BOT_SCRIPT],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                preexec_fn=os.setpgrp,
-            )
-        return jsonify({"message": "Bot is starting..."}), 200
+        bot_status = "starting"
+        if os_type == "Windows":
+            # Start the bot on Windows
+            if not bot_process or bot_process.poll() is not None:
+                bot_process = subprocess.Popen(["python", BOT_SCRIPT], creationflags=subprocess.CREATE_NEW_CONSOLE)
+            bot_status = "online"
+        elif os_type == "Linux":
+            # Start the bot in the tmux session on Linux
+            session_exists = subprocess.run(
+                ["tmux", "has-session", "-t", "Sinon"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            ).returncode == 0
 
-    elif action == "restart":
-        if bot_process and bot_process.poll() is None:
-            bot_process.terminate()
-            bot_process.wait()
+            if not session_exists:
+                return jsonify({"error": "tmux session 'Sinon' does not exist."}), 400
 
-        # Restart the bot
-        return control_bot_start()
+            subprocess.run(["tmux", "send-keys", "-t", "Sinon", "python bot.py", "C-m"])
+            bot_status = "online"
+
+        return jsonify({"message": "Bot is starting."}), 200
 
     elif action == "shutdown":
-        if bot_process and bot_process.poll() is None:
-            bot_process.terminate()
-            bot_process.wait()
-            bot_process = None
-            return jsonify({"message": "Bot is shutting down..."}), 200
-        return jsonify({"error": "Bot is not running."}), 400
+        if bot_status == "offline":
+            return jsonify({"error": "Bot is not running."}), 400
 
-    return jsonify({"error": "Invalid action"}), 400
+        bot_status = "shutting down"
+        if os_type == "Windows":
+            if bot_process and bot_process.poll() is None:
+                bot_process.terminate()
+                bot_process.wait()
+                bot_process = None
+            bot_status = "offline"
+        elif os_type == "Linux":
+            # Send Ctrl+C to the tmux session
+            subprocess.run(["tmux", "send-keys", "-t", "Sinon", "C-c"])
+            bot_status = "offline"
+
+        return jsonify({"message": "Bot is shutting down."}), 200
+
+    elif action == "restart":
+        bot_status = "restarting"
+        if os_type == "Windows":
+            if bot_process and bot_process.poll() is None:
+                bot_process.terminate()
+                bot_process.wait()
+                bot_process = subprocess.Popen(["python", BOT_SCRIPT], creationflags=subprocess.CREATE_NEW_CONSOLE)
+            bot_status = "online"
+        elif os_type == "Linux":
+            # Restart the bot in the tmux session
+            subprocess.run(["tmux", "send-keys", "-t", "Sinon", "C-c"])
+            subprocess.run(["tmux", "send-keys", "-t", "Sinon", "python bot.py", "C-m"])
+            bot_status = "online"
+
+        return jsonify({"message": "Bot is restarting."}), 200
+
+    return jsonify({"error": "Invalid action."}), 400
 
 def control_bot_start():
     global bot_process
@@ -162,8 +186,7 @@ def control_bot_start():
 
 @app.route('/api/check-auth', methods=['GET'])
 def check_auth():
-    is_authenticated = session.get('authenticated', False)
-    return jsonify({"authenticated": is_authenticated})
+    return jsonify({"authenticated": session.get('authenticated', False)})
 
 @app.route('/favicon.ico')
 def favicon():
@@ -177,9 +200,8 @@ def remove_security_headers(response):
 def add_relaxed_security_headers(response):
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        "style-src 'self' 'unsafe-inline'; "
-        "script-src 'self' 'unsafe-inline'; "
-        "connect-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self'; "
     )
     return response
 
