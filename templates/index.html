@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.ico">
     <title>Sinon Dashboard</title>
     <link rel="stylesheet" href="../static/css/style.css">
 </head>
@@ -55,52 +56,6 @@
         </div>
     </div>
 
-    <!-- Channel Settings Section -->
-    <div class="section">
-        <h2>Channel Settings</h2>
-        <div class="content">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Guild ID</th>
-                        <th>Channel ID</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for guild_id, channel_id in channel_settings.items() %}
-                    <tr>
-                        <td>{{ guild_id }}</td>
-                        <td>{{ channel_id }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Role Permissions Section -->
-    <div class="section">
-        <h2>Role Permissions</h2>
-        <div class="content">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Guild ID</th>
-                        <th>Allowed Roles</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for guild_id, roles in role_permissions.items() %}
-                    <tr>
-                        <td>{{ guild_id }}</td>
-                        <td>{{ roles | join(", ") }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
     <!-- Targets Section -->
     <div class="section">
         <h2>Targets</h2>
@@ -144,6 +99,7 @@
         </div>
     </div>
 
+    <!-- Detected Streams Section -->
     <div class="section">
         <h2>Detected Streams</h2>
         <div id="streams-container" class="content">
