@@ -3,19 +3,18 @@ from flask_talisman import Talisman
 from dotenv import load_dotenv
 from flask_cors import CORS
 import subprocess
-import platform
-import signal
 import json
 import os
 
-
 load_dotenv()   # Load environment variables
 
+# Create the Flask app
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "default_secret_key")    # Add a strong secret key
 Talisman(app)                                                           # Enable Content Security Policy
 CORS(app, supports_credentials=True)                                    # Enable CORS
 
+# Data folder path
 DATA_FOLDER = os.path.join(os.path.dirname(__file__), 'data')           # Define the path to your Data folder
 BOT_SCRIPT = os.path.join(os.path.dirname(__file__), 'bot.py')          # Path to the bot script
 
@@ -95,96 +94,95 @@ def detailed_streams():
             return jsonify(detailed_streams)
     return jsonify({})
 
+# API route to fetch bot status
 @app.route('/api/status', methods=['GET'])
 def bot_status_endpoint():
     return jsonify({"status": bot_status})
 
+# API route to control the bot
 @app.route('/api/control', methods=['POST'])
 def control_bot():
     if not session.get('authenticated'):
         return jsonify({"error": "Unauthorized"}), 403
 
-    global bot_process
     action = request.form.get('action')
 
     if action == "start":
-        if bot_process and bot_process.poll() is None:
-            return jsonify({"message": "Bot is already running."}), 400
-
-        # Start the bot in a detached process
-        if os.name == "nt":
-            bot_process = subprocess.Popen(
-                ["python", BOT_SCRIPT],
-                creationflags=subprocess.CREATE_NEW_CONSOLE,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        else:  # Linux/Unix
-            bot_process = subprocess.Popen(
-                ["python3", BOT_SCRIPT],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                preexec_fn=os.setpgrp,
-            )
-        return jsonify({"message": "Bot is starting..."}), 200
+        return start_bot()
 
     elif action == "restart":
-        if bot_process and bot_process.poll() is None:
-            # Shutdown the existing process first
-            shutdown_bot()
-
-        # Restart the bot
-        return control_bot_start()
+        return restart_bot()
 
     elif action == "shutdown":
-        if bot_process and bot_process.poll() is None:
-            shutdown_bot()
-            return jsonify({"message": "Bot is shutting down..."}), 200
-        return jsonify({"error": "Bot is not running."}), 400
+        return shutdown_bot()
 
     return jsonify({"error": "Invalid action"}), 400
 
+# Functions to start the bot
+def start_bot():
+    # Check if the bot is already running in the Sinon tmux session
+    try:
+        result = subprocess.run(
+            ["tmux", "list-panes", "-t", "Sinon", "-F", "#{pane_current_command}"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        if "python3" in result.stdout:
+            return jsonify({"message": "Bot is already running in the Sinon session."}), 400
+    except subprocess.CalledProcessError:
+        return jsonify({"error": "Failed to check the Sinon tmux session."}), 500
+
+    # Start the bot process in the existing Sinon tmux session
+    try:
+        subprocess.run(
+            ["tmux", "send-keys", "-t", "Sinon", "python3 bot.py", "C-m"],
+            check=True,
+        )
+        return jsonify({"message": "Bot is starting in the Sinon tmux session."}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error starting the bot: {e}"}), 500
+
+# Functions to stop the bot
 def shutdown_bot():
-    global bot_process
-    if bot_process:
-        if os.name == "nt":  # Windows
-            bot_process.terminate()
-        else:  # Linux/Unix
-            os.killpg(os.getpgid(bot_process.pid), signal.SIGTERM)
-        bot_process.wait()
-        bot_process = None
-
-def control_bot_start():
-    global bot_process
-    # Start the bot in a detached process
-    if os.name == "nt":  # Windows
-        bot_process = subprocess.Popen(
-            ["python", BOT_SCRIPT],
-            creationflags=subprocess.CREATE_NEW_CONSOLE,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+    # Send a SIGINT (Ctrl+C) to the bot process in the Sinon tmux session
+    try:
+        subprocess.run(
+            ["tmux", "send-keys", "-t", "Sinon", "C-c"],
+            check=True,
         )
-    else:  # Linux/Unix
-        bot_process = subprocess.Popen(
-            ["python3", BOT_SCRIPT],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            preexec_fn=os.setpgrp,
-        )
-    return jsonify({"message": "Bot is starting..."}), 200
+        return jsonify({"message": "Bot has been stopped in the Sinon tmux session."}), 200
+    except subprocess.CalledProcessError:
+        return jsonify({"error": "Bot is not running or tmux session not found."}), 400
+    except Exception as e:
+        return jsonify({"error": f"Error shutting down the bot: {e}"}), 500
 
+# Functions to restart the bot
+def restart_bot():
+    # Stop the bot first
+    shutdown_response = shutdown_bot()
+    if shutdown_response[1] != 200:
+        return shutdown_response
+
+    # Start the bot again
+    return start_bot()
+
+# API route to check authentication
 @app.route('/api/check-auth', methods=['GET'])
 def check_auth():
     return jsonify({"authenticated": session.get('authenticated', False)})
 
+# Favicon
 @app.route('/favicon.ico')
 def favicon():
     return app.send_static_file('favicon.ico')
 
+# Security
 @app.after_request
 def remove_security_headers(response):
     return response
 
+# Content Security Policy
 @app.after_request
 def add_relaxed_security_headers(response):
     response.headers['Content-Security-Policy'] = (
