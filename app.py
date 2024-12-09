@@ -1,21 +1,23 @@
-from flask import Flask, render_template, jsonify, request, session
+from flask import Flask, render_template, jsonify, request, session+
+from flask_talisman import Talisman
 from dotenv import load_dotenv
-import platform
+from flask_cors import CORS
 import subprocess
+import platform
+import signal
 import json
 import os
-from flask_talisman import Talisman
-from flask_cors import CORS
 
-load_dotenv()
+
+load_dotenv()   # Load environment variables
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "default_secret_key")  # Add a strong secret key
-Talisman(app)
-CORS(app, supports_credentials=True)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "default_secret_key")    # Add a strong secret key
+Talisman(app)                                                           # Enable Content Security Policy
+CORS(app, supports_credentials=True)                                    # Enable CORS
 
-DATA_FOLDER = os.path.join(os.path.dirname(__file__), 'data')   # Define the path to your Data folder
-BOT_SCRIPT = os.path.join(os.path.dirname(__file__), 'bot.py')  # Path to the bot script
+DATA_FOLDER = os.path.join(os.path.dirname(__file__), 'data')           # Define the path to your Data folder
+BOT_SCRIPT = os.path.join(os.path.dirname(__file__), 'bot.py')          # Path to the bot script
 
 # Track the bot process and status
 bot_process = None
@@ -52,14 +54,14 @@ def home():
         with open(stats_file, 'r') as file:
             stats = json.load(file)
     else:
-        stats = {}  # Default empty stats if the file doesn't exist
+        stats = {}
 
     return render_template(
         'index.html',
         channel_settings=channel_settings,
         role_permissions=role_permissions,
         targets=targets,
-        stats=stats  # Pass stats to the template
+        stats=stats
     )
 
 # API route to fetch data (optional for AJAX requests)
@@ -99,71 +101,58 @@ def bot_status_endpoint():
 
 @app.route('/api/control', methods=['POST'])
 def control_bot():
-    global bot_process, bot_status
+    if not session.get('authenticated'):
+        return jsonify({"error": "Unauthorized"}), 403
 
+    global bot_process
     action = request.form.get('action')
-    os_type = platform.system()  # Determine the OS (Windows, Linux, etc.)
-    bot_status = "offline" if not bot_process or bot_process.poll() is not None else bot_status
 
     if action == "start":
-        if bot_status == "online":
+        if bot_process and bot_process.poll() is None:
             return jsonify({"message": "Bot is already running."}), 400
 
-        bot_status = "starting"
-        if os_type == "Windows":
-            # Start the bot on Windows
-            if not bot_process or bot_process.poll() is not None:
-                bot_process = subprocess.Popen(["python", BOT_SCRIPT], creationflags=subprocess.CREATE_NEW_CONSOLE)
-            bot_status = "online"
-        elif os_type == "Linux":
-            # Start the bot in the tmux session on Linux
-            session_exists = subprocess.run(
-                ["tmux", "has-session", "-t", "Sinon"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            ).returncode == 0
-
-            if not session_exists:
-                return jsonify({"error": "tmux session 'Sinon' does not exist."}), 400
-
-            subprocess.run(["tmux", "send-keys", "-t", "Sinon", "python bot.py", "C-m"])
-            bot_status = "online"
-
-        return jsonify({"message": "Bot is starting."}), 200
-
-    elif action == "shutdown":
-        if bot_status == "offline":
-            return jsonify({"error": "Bot is not running."}), 400
-
-        bot_status = "shutting down"
-        if os_type == "Windows":
-            if bot_process and bot_process.poll() is None:
-                bot_process.terminate()
-                bot_process.wait()
-                bot_process = None
-            bot_status = "offline"
-        elif os_type == "Linux":
-            # Send Ctrl+C to the tmux session
-            subprocess.run(["tmux", "send-keys", "-t", "Sinon", "C-c"])
-            bot_status = "offline"
-
-        return jsonify({"message": "Bot is shutting down."}), 200
+        # Start the bot in a detached process
+        if os.name == "nt":
+            bot_process = subprocess.Popen(
+                ["python", BOT_SCRIPT],
+                creationflags=subprocess.CREATE_NEW_CONSOLE,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        else:  # Linux/Unix
+            bot_process = subprocess.Popen(
+                ["python3", BOT_SCRIPT],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                preexec_fn=os.setpgrp,
+            )
+        return jsonify({"message": "Bot is starting..."}), 200
 
     elif action == "restart":
-        bot_status = "restarting"
-        if os_type == "Windows":
-            if bot_process and bot_process.poll() is None:
-                bot_process.terminate()
-                bot_process.wait()
-                bot_process = subprocess.Popen(["python", BOT_SCRIPT], creationflags=subprocess.CREATE_NEW_CONSOLE)
-            bot_status = "online"
-        elif os_type == "Linux":
-            # Restart the bot in the tmux session
-            subprocess.run(["tmux", "send-keys", "-t", "Sinon", "C-c"])
-            subprocess.run(["tmux", "send-keys", "-t", "Sinon", "python bot.py", "C-m"])
-            bot_status = "online"
+        if bot_process and bot_process.poll() is None:
+            # Shutdown the existing process first
+            shutdown_bot()
 
-        return jsonify({"message": "Bot is restarting."}), 200
+        # Restart the bot
+        return control_bot_start()
 
-    return jsonify({"error": "Invalid action."}), 400
+    elif action == "shutdown":
+        if bot_process and bot_process.poll() is None:
+            shutdown_bot()
+            return jsonify({"message": "Bot is shutting down..."}), 200
+        return jsonify({"error": "Bot is not running."}), 400
+
+    return jsonify({"error": "Invalid action"}), 400
+
+def shutdown_bot():
+    global bot_process
+    if bot_process:
+        if os.name == "nt":  # Windows
+            bot_process.terminate()
+        else:  # Linux/Unix
+            os.killpg(os.getpgid(bot_process.pid), signal.SIGTERM)
+        bot_process.wait()
+        bot_process = None
 
 def control_bot_start():
     global bot_process
@@ -171,7 +160,7 @@ def control_bot_start():
     if os.name == "nt":  # Windows
         bot_process = subprocess.Popen(
             ["python", BOT_SCRIPT],
-            creationflags=subprocess.CREATE_NEW_CONSOLE,  # Open in a new console
+            creationflags=subprocess.CREATE_NEW_CONSOLE,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
@@ -180,7 +169,7 @@ def control_bot_start():
             ["python3", BOT_SCRIPT],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            preexec_fn=os.setpgrp,  # Detach from terminal
+            preexec_fn=os.setpgrp,
         )
     return jsonify({"message": "Bot is starting..."}), 200
 
