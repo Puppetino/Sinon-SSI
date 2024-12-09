@@ -3,6 +3,7 @@ from flask_talisman import Talisman
 from dotenv import load_dotenv
 from flask_cors import CORS
 import subprocess
+import time
 import json
 import os
 
@@ -94,9 +95,23 @@ def detailed_streams():
             return jsonify(detailed_streams)
     return jsonify({})
 
-# API route to fetch bot status
 @app.route('/api/status', methods=['GET'])
 def bot_status_endpoint():
+    global bot_status
+    try:
+        # Check if the bot is running in the Sinon tmux session
+        result = subprocess.run(
+            ["tmux", "list-panes", "-t", "Sinon", "-F", "#{pane_current_command}"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        if "python3" in result.stdout:
+            bot_status = "online"
+        else:
+            bot_status = "offline"
+    except subprocess.CalledProcessError:
+        bot_status = "offline"
     return jsonify({"status": bot_status})
 
 # API route to control the bot
@@ -120,8 +135,9 @@ def control_bot():
 
 # Functions to start the bot
 def start_bot():
-    # Check if the bot is already running in the Sinon tmux session
+    global bot_status
     try:
+        # Check if the bot is already running in the Sinon tmux session
         result = subprocess.run(
             ["tmux", "list-panes", "-t", "Sinon", "-F", "#{pane_current_command}"],
             capture_output=True,
@@ -129,9 +145,10 @@ def start_bot():
             check=True,
         )
         if "python3" in result.stdout:
+            bot_status = "online"
             return jsonify({"message": "Bot is already running in the Sinon session."}), 400
     except subprocess.CalledProcessError:
-        return jsonify({"error": "Failed to check the Sinon tmux session."}), 500
+        pass  # No existing session; proceed to start
 
     # Start the bot process in the existing Sinon tmux session
     try:
@@ -139,33 +156,39 @@ def start_bot():
             ["tmux", "send-keys", "-t", "Sinon", "python3 bot.py", "C-m"],
             check=True,
         )
+        bot_status = "online"  # Update status
         return jsonify({"message": "Bot is starting in the Sinon tmux session."}), 200
     except Exception as e:
+        bot_status = "offline"  # Ensure status reflects failure
         return jsonify({"error": f"Error starting the bot: {e}"}), 500
 
 # Functions to stop the bot
 def shutdown_bot():
-    # Send a SIGINT (Ctrl+C) to the bot process in the Sinon tmux session
+    global bot_status
     try:
         subprocess.run(
             ["tmux", "send-keys", "-t", "Sinon", "C-c"],
             check=True,
         )
+        bot_status = "offline"  # Update status
         return jsonify({"message": "Bot has been stopped in the Sinon tmux session."}), 200
     except subprocess.CalledProcessError:
+        bot_status = "offline"  # Ensure status reflects failure
         return jsonify({"error": "Bot is not running or tmux session not found."}), 400
     except Exception as e:
         return jsonify({"error": f"Error shutting down the bot: {e}"}), 500
 
 # Functions to restart the bot
 def restart_bot():
-    # Stop the bot first
+    global bot_status
     shutdown_response = shutdown_bot()
-    if shutdown_response[1] != 200:
+    if shutdown_response[1] != 200:  # If shutdown failed, return the error
         return shutdown_response
 
-    # Start the bot again
-    return start_bot()
+    time.sleep(1)  # Ensure shutdown completes
+    start_response = start_bot()
+    bot_status = "online" if start_response[1] == 200 else "offline"
+    return start_response
 
 # API route to check authentication
 @app.route('/api/check-auth', methods=['GET'])

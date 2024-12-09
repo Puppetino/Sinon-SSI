@@ -1,7 +1,3 @@
-///////////////
-// Functions //
-///////////////
-
 // Control bot actions (start, restart, shutdown)
 function controlBot(action) {
     console.log(`Control bot action initiated: ${action}`); // Debug log
@@ -11,10 +7,10 @@ function controlBot(action) {
         credentials: 'same-origin',
         body: new URLSearchParams({ action }),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    });    
+    }).catch(error => console.error('Error controlling bot:', error));
 }
 
-// Fetch detailed streams
+// Fetch detailed streams and render them
 function fetchDetailedStreams() {
     fetch('/api/detailed_streams')
         .then(response => response.json())
@@ -92,7 +88,7 @@ function authenticate() {
         });
 }
 
-// Fetch and update bot status
+// Update bot status and UI dynamically
 function updateBotStatus() {
     fetch('/api/status')
         .then(response => response.json())
@@ -109,14 +105,7 @@ function updateBotStatus() {
         .catch(error => console.error('Error fetching bot status:', error));
 }
 
-// Poll bot status every 5 seconds
-setInterval(updateBotStatus, 5000);
-document.addEventListener('DOMContentLoaded', updateBotStatus);
-
-//////////////////////////////////////////
-// Event listener for DOM content loaded//
-//////////////////////////////////////////
-
+// Attach all event listeners after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM fully loaded and parsed'); // Debug log
 
@@ -137,17 +126,12 @@ document.addEventListener('DOMContentLoaded', () => {
             controlBot(action);
         }
     });
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM fully loaded and parsed'); // Debug log
 
     // Attach toggle functionality to section divs
     document.querySelectorAll('.section').forEach(section => {
         section.addEventListener('click', (event) => {
-            // Ignore clicks on input fields or buttons
             if (event.target.matches('input, button, textarea')) {
-                return;
+                return; // Ignore clicks on interactive elements
             }
             const content = section.querySelector('.content');
             content.classList.toggle('hidden');
@@ -162,14 +146,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ? "Toggle Dark Mode"
             : "Toggle Light Mode";
     });
-});
 
-document.getElementById('auth-form').addEventListener('submit', (event) => {
-    event.preventDefault();
-    authenticate();
-});
+    // Initial fetch for bot status and streams
+    updateBotStatus();
+    fetchDetailedStreams();
 
-document.addEventListener('DOMContentLoaded', () => {
-    fetchDetailedStreams(); // Initial fetch
-    setInterval(fetchDetailedStreams, 30000); // Refresh every 30 seconds
+    // Set up periodic updates
+    setInterval(updateBotStatus, 5000);
+    setInterval(fetchDetailedStreams, 30000);
 });
