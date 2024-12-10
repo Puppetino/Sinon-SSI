@@ -18,7 +18,15 @@ function fetchDetailedStreams() {
             const container = document.getElementById('streams-container');
             container.innerHTML = ''; // Clear existing cards
 
-            Object.values(data).forEach(stream => {
+            // Convert the object to an array and sort by start_time
+            const streams = Object.values(data).sort((a, b) => {
+                const startA = new Date(a.start_time);
+                const startB = new Date(b.start_time);
+                return startB - startA; // Sort by ascending start_time
+            });
+
+            // Render sorted streams
+            streams.forEach(stream => {
                 const card = document.createElement('div');
                 card.className = 'stream-card';
 
