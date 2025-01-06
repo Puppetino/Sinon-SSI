@@ -16,7 +16,7 @@ function fetchDetailedStreams() {
         .then(response => response.json())
         .then(data => {
             const container = document.getElementById('streams-container');
-            container.innerHTML = ''; // Clear existing cards
+            container.innerHTML = '';
 
             // Convert the object to an array and sort by start_time
             const streams = Object.values(data).sort((a, b) => {

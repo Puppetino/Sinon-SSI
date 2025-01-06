@@ -7,21 +7,59 @@ import time
 import json
 import os
 
-load_dotenv()   # Load environment variables
+load_dotenv()  # Load environment variables
 
 # Create the Flask app
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "default_secret_key")    # Add a strong secret key
-Talisman(app)                                                           # Enable Content Security Policy
-CORS(app, supports_credentials=True)                                    # Enable CORS
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "default_secret_key")  # Add a strong secret key
+Talisman(app)  # Enable Content Security Policy
+CORS(app, supports_credentials=True)  # Enable CORS
 
-# Data folder path
-DATA_FOLDER = os.path.join(os.path.dirname(__file__), 'data')           # Define the path to your Data folder
-BOT_SCRIPT = os.path.join(os.path.dirname(__file__), 'bot.py')          # Path to the bot script
+# Paths
+DATA_FOLDER = os.path.join(os.path.dirname(__file__), 'data')  # Define the path to your Data folder
+STATS_FILE = os.path.join(DATA_FOLDER, 'stats.json')
+TARGETS_FILE = os.path.join(DATA_FOLDER, 'targets.json')
+BOT_SCRIPT = os.path.join(os.path.dirname(__file__), 'bot.py')  # Path to the bot script
+
+# Default file structures
+DEFAULT_STATS = {
+    "streams_checked": 0,
+    "active_streams": 0,
+    "guilds_tracked": 0,
+    "messages_sent": 0,
+    "detailed_streams": {}
+}
+DEFAULT_TARGETS = {
+    "active_targets": [],
+    "past_targets": []
+}
 
 # Track the bot process and status
 bot_process = None
 bot_status = "offline"
+
+# Function to ensure files exist with default content
+def ensure_file_exists(file_path, default_content):
+    """Ensure a JSON file exists and is properly initialized."""
+    if not os.path.exists(DATA_FOLDER):
+        os.makedirs(DATA_FOLDER)  # Create the data folder if it doesn't exist
+
+    if not os.path.exists(file_path):
+        with open(file_path, 'w') as file:
+            json.dump(default_content, file, indent=4)
+    else:
+        try:
+            # Attempt to load the JSON to ensure it's valid
+            with open(file_path, 'r') as file:
+                json.load(file)
+        except (json.JSONDecodeError, IOError):
+            # Reinitialize the file if it's corrupted
+            with open(file_path, 'w') as file:
+                json.dump(default_content, file, indent=4)
+
+# Ensure critical files are initialized
+ensure_file_exists(STATS_FILE, DEFAULT_STATS)
+ensure_file_exists(TARGETS_FILE, DEFAULT_TARGETS)
 
 # Authentication
 @app.route('/api/auth', methods=['POST'])
@@ -49,12 +87,7 @@ def home():
     targets = load_json('targets.json')
 
     # Load stats from stats.json
-    stats_file = os.path.join(DATA_FOLDER, 'stats.json')
-    if os.path.exists(stats_file):
-        with open(stats_file, 'r') as file:
-            stats = json.load(file)
-    else:
-        stats = {}
+    stats = load_json('stats.json')
 
     return render_template(
         'index.html',
@@ -64,36 +97,21 @@ def home():
         stats=stats
     )
 
-# API route to fetch data (optional for AJAX requests)
+# API route to fetch data
 @app.route('/api/stats')
 def api_stats():
-    data = {
+    return jsonify({
         "channel_settings": load_json('channel_settings.json'),
         "role_permissions": load_json('role_permission.json'),
-        "targets": load_json('targets.json')
-    }
-
-    # Load stats.json and include in the response
-    stats_file = os.path.join(DATA_FOLDER, "stats.json")
-    if os.path.exists(stats_file):
-        with open(stats_file, 'r') as file:
-            data["stats"] = json.load(file)
-    else:
-        data["stats"] = {}
-
-    return jsonify(data)
+        "targets": load_json('targets.json'),
+        "stats": load_json('stats.json'),
+    })
 
 # API route to fetch detailed streams
 @app.route('/api/detailed_streams', methods=['GET'])
 def detailed_streams():
-    stats_file = os.path.join(DATA_FOLDER, 'stats.json')
-    if os.path.exists(stats_file):
-        with open(stats_file, 'r') as file:
-            stats = json.load(file)
-            detailed_streams = stats.get("detailed_streams", {})
-            # Add additional processing if necessary
-            return jsonify(detailed_streams)
-    return jsonify({})
+    stats = load_json('stats.json')
+    return jsonify(stats.get("detailed_streams", {}))
 
 @app.route('/api/status', methods=['GET'])
 def bot_status_endpoint():
@@ -106,10 +124,7 @@ def bot_status_endpoint():
             text=True,
             check=True,
         )
-        if "python3" in result.stdout:
-            bot_status = "online"
-        else:
-            bot_status = "offline"
+        bot_status = "online" if "python3" in result.stdout else "offline"
     except subprocess.CalledProcessError:
         bot_status = "offline"
     return jsonify({"status": bot_status})
@@ -137,7 +152,6 @@ def control_bot():
 def start_bot():
     global bot_status
     try:
-        # Check if the bot is already running in the Sinon tmux session
         result = subprocess.run(
             ["tmux", "list-panes", "-t", "Sinon", "-F", "#{pane_current_command}"],
             capture_output=True,
@@ -146,34 +160,27 @@ def start_bot():
         )
         if "python3" in result.stdout:
             bot_status = "online"
-            return jsonify({"message": "Bot is already running in the Sinon session."}), 400
+            return jsonify({"message": "Bot is already running."}), 400
     except subprocess.CalledProcessError:
-        pass  # No existing session; proceed to start
+        pass
 
-    # Start the bot process in the existing Sinon tmux session
     try:
-        subprocess.run(
-            ["tmux", "send-keys", "-t", "Sinon", "python3 bot.py", "C-m"],
-            check=True,
-        )
-        bot_status = "online"  # Update status
-        return jsonify({"message": "Bot is starting in the Sinon tmux session."}), 200
+        subprocess.run(["tmux", "send-keys", "-t", "Sinon", "python3 bot.py", "C-m"], check=True)
+        bot_status = "online"
+        return jsonify({"message": "Bot is starting."}), 200
     except Exception as e:
-        bot_status = "offline"  # Ensure status reflects failure
+        bot_status = "offline"
         return jsonify({"error": f"Error starting the bot: {e}"}), 500
 
 # Functions to stop the bot
 def shutdown_bot():
     global bot_status
     try:
-        subprocess.run(
-            ["tmux", "send-keys", "-t", "Sinon", "C-c"],
-            check=True,
-        )
-        bot_status = "offline"  # Update status
-        return jsonify({"message": "Bot has been stopped in the Sinon tmux session."}), 200
+        subprocess.run(["tmux", "send-keys", "-t", "Sinon", "C-c"], check=True)
+        bot_status = "offline"
+        return jsonify({"message": "Bot has been stopped."}), 200
     except subprocess.CalledProcessError:
-        bot_status = "offline"  # Ensure status reflects failure
+        bot_status = "offline"
         return jsonify({"error": "Bot is not running or tmux session not found."}), 400
     except Exception as e:
         return jsonify({"error": f"Error shutting down the bot: {e}"}), 500
@@ -182,10 +189,10 @@ def shutdown_bot():
 def restart_bot():
     global bot_status
     shutdown_response = shutdown_bot()
-    if shutdown_response[1] != 200:  # If shutdown failed, return the error
+    if shutdown_response[1] != 200:
         return shutdown_response
 
-    time.sleep(1)  # Ensure shutdown completes
+    time.sleep(1)
     start_response = start_bot()
     bot_status = "online" if start_response[1] == 200 else "offline"
     return start_response
@@ -194,26 +201,6 @@ def restart_bot():
 @app.route('/api/check-auth', methods=['GET'])
 def check_auth():
     return jsonify({"authenticated": session.get('authenticated', False)})
-
-# Favicon
-@app.route('/favicon.ico')
-def favicon():
-    return app.send_static_file('favicon.ico')
-
-# Security
-@app.after_request
-def remove_security_headers(response):
-    return response
-
-# Content Security Policy
-@app.after_request
-def add_relaxed_security_headers(response):
-    response.headers['Content-Security-Policy'] = (
-        "default-src 'self'; "
-        "script-src 'self'; "
-        "style-src 'self'; "
-    )
-    return response
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -396,9 +396,9 @@ async def check_twitch_streams():
                     title=f"{dev_info['display_name']} is live!",
                     url=dev_info["url"],
                     description=(
-                        f"One of the developers of {CATEGORY_NAME} is live!\n\n"
                         f"**{quote}**\n\n"
-                        f"**Title**: {stream['title']}"
+                        f"One of the developers of {CATEGORY_NAME} is live!\n\n"
+                        f"{stream['title']}"
                     ),
                     color=discord.Color.gold()
                 )
